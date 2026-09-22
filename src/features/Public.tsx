@@ -1,3 +1,4 @@
+import { RichText } from "../components/RichText";
 import { useState, type FormEvent } from "react";
 import { Button, IconButton } from "../components/Button";
 import { TextField, PasswordField, TextArea } from "../components/Field";
@@ -61,7 +62,7 @@ export function PublicPage({ path }: { path: string }) {
               {data.organization.name} · {job.location} · {job.mode}
             </p>
             <div className="panel">
-              <p className="preserve prose">{job.description}</p>
+              <RichText value={job.description} />
             </div>
             <p className="muted mt">
               This is a preview of a shared opportunity. Applications are not

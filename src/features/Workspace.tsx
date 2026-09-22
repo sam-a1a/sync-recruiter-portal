@@ -1,3 +1,5 @@
+import { ViewToggle } from "../components/ViewToggle";
+import { useCollectionView } from "../hooks/useCollectionView";
 import { useState, type FormEvent } from "react";
 import {
   Header,
@@ -264,6 +266,7 @@ export function TrackedLinks({
   jobId?: string;
   embedded?: boolean;
 }) {
+  const [view, setView] = useCollectionView("tracked-links", "rows");
   const { data, setData, notify } = useWorkspace();
   const [q, setQ] = useState("");
   const [channel, setChannel] = useState("All");
@@ -363,7 +366,13 @@ export function TrackedLinks({
           ))}
         </SelectField>
       </div>
-      <Panel className="table-panel">
+      <div className="collection-toolbar">
+        <span className="meta">{links.length} links</span>
+        <ViewToggle label="Tracked links" value={view} onChange={setView} />
+      </div>
+      <Panel
+        className={`table-panel collection-table collection-table--${view}`}
+      >
         {links.length ? (
           <table className="data-table links-table">
             <thead>

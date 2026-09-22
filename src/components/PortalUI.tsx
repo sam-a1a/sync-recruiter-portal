@@ -181,14 +181,19 @@ export function Tabs({
   value,
   onChange,
   label = "View",
+  idPrefix,
+  panelId,
 }: {
   options: { id: string; label: string; count?: number }[];
   value: string;
   onChange: (value: string) => void;
   label?: string;
+  idPrefix?: string;
+  panelId?: string;
 }) {
   const refs = useRef(new Map<string, HTMLButtonElement>());
-  const id = useId();
+  const generatedId = useId();
+  const id = idPrefix || generatedId;
   return (
     <div className="tabs" role="tablist" aria-label={label}>
       {options.map((option, index) => (
@@ -197,6 +202,7 @@ export function Tabs({
           type="button"
           role="tab"
           aria-selected={option.id === value}
+          aria-controls={panelId}
           tabIndex={option.id === value ? 0 : -1}
           key={option.id}
           id={`${id}-${option.id}`}

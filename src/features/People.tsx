@@ -1,3 +1,5 @@
+import { ViewToggle } from "../components/ViewToggle";
+import { useCollectionView } from "../hooks/useCollectionView";
 import { useState } from "react";
 import {
   Header,
@@ -20,6 +22,9 @@ import { useQuery } from "../app/router";
 import { dateLabel, roles, locations, skills, type Candidate } from "../data";
 import { Notes, TagsEditor } from "./Applications";
 export function Candidates({ saved = false }: { saved?: boolean }) {
+  const [view, setView] = useCollectionView(
+    saved ? "talent-pool" : "candidates",
+  );
   const { data, setData, notify } = useWorkspace();
   const { params, set } = useQuery();
   const tab = params.get("tab") || "filter";
@@ -302,8 +307,16 @@ export function Candidates({ saved = false }: { saved?: boolean }) {
             <option value="experience-asc">Least experience</option>
           </SelectField>
         )}
+        <ViewToggle
+          label={saved ? "Talent pool" : "Candidates"}
+          value={view}
+          onChange={setView}
+        />
       </div>
-      <div className="candidate-grid">
+      <div
+        className={`candidate-grid record-collection ${view === "rows" ? "is-rows" : ""}`}
+        data-view={view}
+      >
         {results.map((c) => (
           <article className="candidate-card" key={c.id}>
             <div className="candidate-card-heading">
@@ -498,7 +511,15 @@ export function ProfileCV({
 }
 export function CandidateDetail({ id }: { id: string }) {
   const { data, setData, notify } = useWorkspace();
-  const { params } = useQuery();
+  const { params, set } = useQuery();
+  const candidateTabs = [
+    { id: "profile", label: "Profile" },
+    { id: "notes", label: "Notes & tags" },
+    { id: "placements", label: "Placements" },
+  ];
+  const tab = candidateTabs.some((t) => t.id === params.get("tab"))
+    ? params.get("tab")!
+    : "profile";
   const [cv, setCV] = useState(false);
   const c = data.candidates.find((c) => c.id === id);
   if (!c)
@@ -586,37 +607,61 @@ export function CandidateDetail({ id }: { id: string }) {
           <strong>{c.languages.join(" · ")}</strong>
         </div>
       </div>
-      <div className="detail-grid section-space">
-        <div className="stack">
+      <div className="detail-navigation">
+        <Tabs
+          label="Candidate sections"
+          options={candidateTabs}
+          value={tab}
+          onChange={(tab) => set({ tab })}
+          idPrefix="candidate-tabs"
+          panelId="candidate-section"
+        />
+      </div>
+      <div
+        className="detail-section"
+        role="tabpanel"
+        id="candidate-section"
+        aria-labelledby={`candidate-tabs-${tab}`}
+        tabIndex={0}
+      >
+        <div hidden={tab !== "profile"}>
           <ProfileContent candidate={c} />
-          <Notes notes={c.notes} onChange={(notes) => update({ notes })} />
         </div>
-        <div className="stack">
-          <Panel title="Talent pool">
-            <div className="pool-state">
-              <Icon name={c.saved ? "bookmark" : "person"} size={32} />
-              <h3>
-                {c.saved ? "A person to keep in mind" : "Keep this connection"}
-              </h3>
-              <p className="muted">
-                {c.saved
-                  ? "Saved for opportunities with your team."
-                  : "Save this profile so it is easy to find when the right opportunity comes along."}
-              </p>
-              <Button
-                variant="tonal"
-                onClick={() =>
-                  update({
-                    saved: !c.saved,
-                    savedAt: c.saved ? undefined : new Date().toISOString(),
-                  })
-                }
-              >
-                {c.saved ? "Remove from pool" : "Save candidate"}
-              </Button>
+        <div hidden={tab !== "notes"}>
+          <div className="detail-grid">
+            <Notes notes={c.notes} onChange={(notes) => update({ notes })} />
+            <div className="stack">
+              <TagsEditor tags={c.tags} onChange={(tags) => update({ tags })} />
+              <Panel title="Talent pool">
+                <div className="pool-state">
+                  <Icon name={c.saved ? "bookmark" : "person"} size={32} />
+                  <h3>
+                    {c.saved
+                      ? "A person to keep in mind"
+                      : "Keep this connection"}
+                  </h3>
+                  <p className="muted">
+                    {c.saved
+                      ? "Saved for opportunities with your team."
+                      : "Save this profile so it is easy to find when the right opportunity comes along."}
+                  </p>
+                  <Button
+                    variant="tonal"
+                    onClick={() =>
+                      update({
+                        saved: !c.saved,
+                        savedAt: c.saved ? undefined : new Date().toISOString(),
+                      })
+                    }
+                  >
+                    {c.saved ? "Remove from pool" : "Save candidate"}
+                  </Button>
+                </div>
+              </Panel>
             </div>
-          </Panel>
-          <TagsEditor tags={c.tags} onChange={(tags) => update({ tags })} />
+          </div>
+        </div>
+        <div hidden={tab !== "placements"}>
           <Panel title="Placements">
             {placements.length ? (
               placements.map((a) => (
@@ -644,6 +689,7 @@ export function CandidateDetail({ id }: { id: string }) {
   );
 }
 export function Placements() {
+  const [view, setView] = useCollectionView("placements", "rows");
   const { data } = useWorkspace();
   const { params, set } = useQuery();
   const tab = params.get("tab") || "All";
@@ -708,7 +754,13 @@ export function Placements() {
             ))}
         </SelectField>
       </div>
-      <Panel className="table-panel">
+      <div className="collection-toolbar">
+        <span className="meta">{list.length} hire claims</span>
+        <ViewToggle label="Placements" value={view} onChange={setView} />
+      </div>
+      <Panel
+        className={`table-panel collection-table collection-table--${view}`}
+      >
         {list.length ? (
           <table className="data-table">
             <thead>

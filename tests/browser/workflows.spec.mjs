@@ -69,6 +69,7 @@ test("recruiter workflows persist changes and enforce lifecycle rules", async ({
   await p
     .getByRole("button", { name: "Move to Reviewing", exact: true })
     .click();
+  await p.getByRole("tab", { name: "Notes & tags", exact: true }).click();
   await p
     .getByLabel("Add a note", { exact: true })
     .fill("QA: Discuss partnership experience.");
@@ -76,6 +77,7 @@ test("recruiter workflows persist changes and enforce lifecycle rules", async ({
   await p
     .getByRole("button", { name: "Future opportunity", exact: true })
     .click();
+  await p.getByRole("tab", { name: "Messages", exact: true }).click();
   await p
     .getByLabel("Start from a template", { exact: true })
     .selectOption("t1");
@@ -87,6 +89,7 @@ test("recruiter workflows persist changes and enforce lifecycle rules", async ({
   await p.getByRole("button", { name: "Preview send", exact: true }).click();
   await p.getByRole("button", { name: "Save preview", exact: true }).click();
   await close();
+  await p.getByRole("tab", { name: "Overview", exact: true }).click();
   await p.getByLabel("More moves", { exact: true }).selectOption("Rejected");
   await p.getByRole("button", { name: "Move", exact: true }).click();
   await p
@@ -131,6 +134,7 @@ test("recruiter workflows persist changes and enforce lifecycle rules", async ({
   await p.getByRole("button", { name: "Find candidates", exact: true }).click();
   assert.equal(await p.locator(".candidate-card").count(), 1);
   await p.getByRole("link", { name: "Nour Faris", exact: true }).click();
+  await p.getByRole("tab", { name: "Notes & tags", exact: true }).click();
   await p.getByLabel("Add a note", { exact: true }).fill("QA: Keep in touch.");
   await p.getByRole("button", { name: "Add note", exact: true }).click();
   await go("/talent-pool");

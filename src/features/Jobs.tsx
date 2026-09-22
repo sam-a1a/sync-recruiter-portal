@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import {
   Header,
   Panel,
@@ -11,11 +11,7 @@ import {
   Badge,
 } from "../components/PortalUI";
 import { Button, IconButton } from "../components/Button";
-import {
-  TextField,
-  TextArea as TextAreaField,
-  SelectField,
-} from "../components/Field";
+import { TextField, SelectField } from "../components/Field";
 import { ConfirmDialog } from "../components/Dialog";
 import { Icon } from "../components/Icon";
 import { useWorkspace } from "../store";
@@ -33,7 +29,12 @@ import {
 } from "../data";
 import { ApplicationList } from "./Applications";
 import { TrackedLinks } from "./Workspace";
+import { ViewToggle } from "../components/ViewToggle";
+import { useCollectionView } from "../hooks/useCollectionView";
+import { RichText } from "../components/RichText";
+const RichTextEditor = lazy(() => import("../components/RichTextEditor"));
 export function Jobs() {
+  const [view, setView] = useCollectionView("jobs");
   const { data } = useWorkspace();
   const { params, set } = useQuery();
   const status = params.get("status") || "All";
@@ -102,7 +103,14 @@ export function Jobs() {
           <option value="applications">Most applications</option>
         </SelectField>
       </div>
-      <div className="jobs-grid">
+      <div className="collection-toolbar">
+        <span className="meta">{jobs.length} jobs</span>
+        <ViewToggle label="Jobs" value={view} onChange={setView} />
+      </div>
+      <div
+        className={`jobs-grid record-collection ${view === "rows" ? "is-rows" : ""}`}
+        data-view={view}
+      >
         {jobs.map((j) => {
           const applications = data.applications.filter(
             (a) => a.jobId === j.id,
@@ -226,7 +234,7 @@ export function JobDetail({ id }: { id: string }) {
         {tab === "details" ? (
           <div className="detail-grid">
             <Panel title="About this role">
-              <p className="prose preserve">{job.description}</p>
+              <RichText value={job.description} />
             </Panel>
             <div className="stack">
               <Panel title="Job details">
@@ -540,13 +548,15 @@ export function JobWizard() {
                 onChange={(e) => update({ department: e.target.value })}
               />
             </div>
-            <TextAreaField
-              label="Job description"
-              value={draft.description}
-              rows={8}
-              required
-              onChange={(e) => update({ description: e.target.value })}
-            />
+            <Suspense
+              fallback={<p role="status">Loading description editor…</p>}
+            >
+              <RichTextEditor
+                label="Job description"
+                value={draft.description}
+                onChange={(description) => update({ description })}
+              />
+            </Suspense>
             <div className="form-grid">
               <SelectField
                 label="Location"
@@ -872,7 +882,7 @@ export function JobWizard() {
                 {draft.location} · {draft.mode} · {draft.type}
               </p>
             </div>
-            <p className="preserve prose">{draft.description}</p>
+            <RichText value={draft.description} />
             <div className="notice">
               <Icon name="checklist" />
               <span>

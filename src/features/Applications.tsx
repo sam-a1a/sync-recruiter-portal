@@ -1,3 +1,6 @@
+import { ViewToggle } from "../components/ViewToggle";
+import { useCollectionView } from "../hooks/useCollectionView";
+import { Checkbox } from "../components/Checkbox";
 import { useState } from "react";
 import {
   Header,
@@ -41,6 +44,7 @@ export function Applications() {
   );
 }
 export function ApplicationList({ jobId }: { jobId?: string }) {
+  const [view, setView] = useCollectionView("applications", "rows");
   const { data, setData, notify } = useWorkspace();
   const { params, set } = useQuery();
   const stage = params.get("stage") || "Open";
@@ -138,8 +142,16 @@ export function ApplicationList({ jobId }: { jobId?: string }) {
           </SelectField>
         )}
       </div>
+      <div className="collection-toolbar">
+        <span className="meta">
+          Select individual applications to move them together
+        </span>
+        <ViewToggle label="Applications" value={view} onChange={setView} />
+      </div>
       <div className="application-layout">
-        <Panel className="table-panel">
+        <Panel
+          className={`table-panel collection-table collection-table--${view}`}
+        >
           <div className="record-caption">
             <h2>
               {stage === "Open" ? "Open applications" : `${stage} applications`}
@@ -185,9 +197,8 @@ export function ApplicationList({ jobId }: { jobId?: string }) {
                   return (
                     <tr key={a.id} data-selected={selected.includes(a.id)}>
                       <td className="selection-cell">
-                        <input
-                          type="checkbox"
-                          aria-label={`Select ${c.name}`}
+                        <Checkbox
+                          label={`Select ${c.name}`}
                           checked={selected.includes(a.id)}
                           disabled={!tickable}
                           onChange={(e) =>
@@ -450,6 +461,18 @@ export function TagsEditor({
   );
 }
 export function ApplicationReview({ id }: { id: string }) {
+  const { params, set } = useQuery();
+  const reviewTabs = [
+    { id: "overview", label: "Overview" },
+    { id: "profile", label: "Profile" },
+    { id: "assessment", label: "Assessment" },
+    { id: "notes", label: "Notes & tags" },
+    { id: "messages", label: "Messages" },
+    { id: "activity", label: "Activity" },
+  ];
+  const tab = reviewTabs.some((t) => t.id === params.get("tab"))
+    ? params.get("tab")!
+    : "overview";
   const { data, setData, notify } = useWorkspace();
   const app = data.applications.find((a) => a.id === id);
   const [move, setMove] = useState<Stage | null>(null);
@@ -509,7 +532,7 @@ export function ApplicationReview({ id }: { id: string }) {
     <>
       <Back to="/applications" label="Applications" />
       <Header
-        eyebrow="Application review · Snapshot"
+        eyebrow={`Application review · Snapshot · ${app.stage}`}
         title={c.name}
         description={`For ${job.title}`}
         actions={
@@ -550,122 +573,149 @@ export function ApplicationReview({ id }: { id: string }) {
           <strong>{dateLabel(app.date)}</strong>
         </div>
       </div>
-      <Panel className="pipeline-panel">
-        <div className="panel-heading">
-          <h2>Hiring pipeline</h2>
-          <Status value={app.stage} />
-        </div>
-        <ol
-          className="pipeline-steps"
-          tabIndex={0}
-          aria-label="Hiring pipeline stages"
-        >
-          {stages.slice(0, 6).map((s, i) => (
-            <li
-              key={s}
-              data-current={s === app.stage}
-              data-complete={index < 6 && i < index}
-            >
-              <span>
-                {index < 6 && i < index ? (
-                  <Icon name="check" size={18} />
-                ) : (
-                  i + 1
-                )}
-              </span>
-              <strong>{s}</strong>
-            </li>
-          ))}
-        </ol>
-        {moves.length > 0 ? (
-          <div className="pipeline-actions">
-            <div className="actions">
-              {index > 0 && index < 5 && (
-                <Button
-                  variant="outlined"
-                  icon="arrow_back"
-                  onClick={() => choose(stages[index - 1])}
-                >
-                  {stages[index - 1]}
-                </Button>
-              )}
-              {next && moves.includes(next) && index < 5 && (
-                <Button variant="filled" onClick={() => choose(next)}>
-                  {next === "Hired" ? "Mark as hired" : `Move to ${next}`}
-                  <Icon name="arrow_forward" size={18} />
-                </Button>
-              )}
-              {app.stage === "Rejected" && (
-                <Button variant="filled" onClick={() => choose("Reviewing")}>
-                  Reopen for review
-                </Button>
-              )}
-            </div>
-            <div className="actions">
-              <SelectField
-                label="More moves"
-                value={more}
-                onChange={(e) => setMore(e.target.value)}
+      <div className="detail-navigation">
+        <Tabs
+          label="Application sections"
+          options={reviewTabs}
+          value={tab}
+          onChange={(tab) => set({ tab })}
+          idPrefix="application-tabs"
+          panelId="application-section"
+        />
+      </div>
+      <div
+        className="detail-section"
+        role="tabpanel"
+        id="application-section"
+        aria-labelledby={`application-tabs-${tab}`}
+        tabIndex={0}
+      >
+        <div hidden={tab !== "overview"}>
+          <div className="stack">
+            <Panel className="pipeline-panel">
+              <div className="panel-heading">
+                <h2>Hiring pipeline</h2>
+                <Status value={app.stage} />
+              </div>
+              <ol
+                className="pipeline-steps"
+                tabIndex={0}
+                aria-label="Hiring pipeline stages"
               >
-                <option value="">Choose a move</option>
-                {moves.map((s) => (
-                  <option key={s}>{s}</option>
+                {stages.slice(0, 6).map((s, i) => (
+                  <li
+                    key={s}
+                    data-current={s === app.stage}
+                    data-complete={index < 6 && i < index}
+                  >
+                    <span>
+                      {index < 6 && i < index ? (
+                        <Icon name="check" size={18} />
+                      ) : (
+                        i + 1
+                      )}
+                    </span>
+                    <strong>{s}</strong>
+                  </li>
                 ))}
-              </SelectField>
-              <Button
-                variant="outlined"
-                disabled={!more}
-                onClick={() => {
-                  choose(more as Stage);
-                  setMore("");
-                }}
-              >
-                Move
-              </Button>
+              </ol>
+              {moves.length > 0 ? (
+                <div className="pipeline-actions">
+                  <div className="actions">
+                    {index > 0 && index < 5 && (
+                      <Button
+                        variant="outlined"
+                        icon="arrow_back"
+                        onClick={() => choose(stages[index - 1])}
+                      >
+                        {stages[index - 1]}
+                      </Button>
+                    )}
+                    {next && moves.includes(next) && index < 5 && (
+                      <Button variant="filled" onClick={() => choose(next)}>
+                        {next === "Hired" ? "Mark as hired" : `Move to ${next}`}
+                        <Icon name="arrow_forward" size={18} />
+                      </Button>
+                    )}
+                    {app.stage === "Rejected" && (
+                      <Button
+                        variant="filled"
+                        onClick={() => choose("Reviewing")}
+                      >
+                        Reopen for review
+                      </Button>
+                    )}
+                  </div>
+                  <div className="actions">
+                    <SelectField
+                      label="More moves"
+                      value={more}
+                      onChange={(e) => setMore(e.target.value)}
+                    >
+                      <option value="">Choose a move</option>
+                      {moves.map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </SelectField>
+                    <Button
+                      variant="outlined"
+                      disabled={!more}
+                      onClick={() => {
+                        choose(more as Stage);
+                        setMore("");
+                      }}
+                    >
+                      Move
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="muted">
+                  {app.stage === "Hired"
+                    ? `Started ${app.startDate ? dateLabel(app.startDate) : "date not recorded"} · ${app.confirmation}`
+                    : "The candidate withdrew this application. It cannot be moved."}
+                </p>
+              )}
+              {app.rejectionDate && (
+                <p className="notice">
+                  Rejection scheduled for {dateLabel(app.rejectionDate)}. No
+                  email is sent from this preview.
+                </p>
+              )}
+            </Panel>
+            <div className="detail-grid">
+              <Panel title="Screening">
+                <Status value={app.screening} />
+                <p className="mt muted">
+                  {app.screening === "Qualified"
+                    ? "This application meets the recorded screening requirements. Review the profile and answers before deciding."
+                    : app.screening === "Not qualified"
+                      ? "The minimum experience requirement was not met. You can still review and move this application."
+                      : "The screening result is not ready yet."}
+                </p>
+              </Panel>
+              <Panel title="Application answers">
+                {job.criteria.questions.map((q, i) => (
+                  <div className="question-read" key={i}>
+                    <h3>{q.text}</h3>
+                    <p>
+                      {q.type === "Yes / no"
+                        ? "Yes"
+                        : "I am interested in contributing to community programmes and bring relevant experience to the team."}
+                    </p>
+                  </div>
+                ))}
+                {!job.criteria.questions.length && (
+                  <p className="muted">No additional questions were asked.</p>
+                )}
+              </Panel>
             </div>
           </div>
-        ) : (
-          <p className="muted">
-            {app.stage === "Hired"
-              ? `Started ${app.startDate ? dateLabel(app.startDate) : "date not recorded"} · ${app.confirmation}`
-              : "The candidate withdrew this application. It cannot be moved."}
-          </p>
-        )}
-        {app.rejectionDate && (
-          <p className="notice">
-            Rejection scheduled for {dateLabel(app.rejectionDate)}. No email is
-            sent from this preview.
-          </p>
-        )}
-      </Panel>
-      <div className="detail-grid section-space">
-        <div className="stack">
-          <Panel title="Screening">
-            <Status value={app.screening} />
-            <p className="mt muted">
-              {app.screening === "Qualified"
-                ? "This application meets the recorded screening requirements. Review the profile and answers before deciding."
-                : app.screening === "Not qualified"
-                  ? "The minimum experience requirement was not met. You can still review and move this application."
-                  : "The screening result is not ready yet."}
-            </p>
-          </Panel>
+        </div>
+        <div hidden={tab !== "profile"}>
           <ProfileContent candidate={c} snapshot />
-          <Panel title="Application answers">
-            {job.criteria.questions.map((q, i) => (
-              <div className="question-read" key={i}>
-                <h3>{q.text}</h3>
-                <p>
-                  {q.type === "Yes / no"
-                    ? "Yes"
-                    : "I am interested in contributing to community programmes and bring relevant experience to the team."}
-                </p>
-              </div>
-            ))}
-            {!job.criteria.questions.length && (
-              <p className="muted">No additional questions were asked.</p>
-            )}
-          </Panel>
+        </div>
+        <div hidden={tab !== "assessment"}>
           <Panel title="Match assessment" action={<Badge>Sample</Badge>}>
             <p className="muted">
               An additional perspective to support your judgement. This preview
@@ -698,10 +748,14 @@ export function ApplicationReview({ id }: { id: string }) {
               </Button>
             )}
           </Panel>
-          <Notes notes={app.notes} onChange={(notes) => update({ notes })} />
         </div>
-        <div className="stack">
-          <TagsEditor tags={app.tags} onChange={(tags) => update({ tags })} />
+        <div hidden={tab !== "notes"}>
+          <div className="detail-grid">
+            <Notes notes={app.notes} onChange={(notes) => update({ notes })} />
+            <TagsEditor tags={app.tags} onChange={(tags) => update({ tags })} />
+          </div>
+        </div>
+        <div hidden={tab !== "messages"}>
           <Panel title="Message the applicant">
             <form
               className="form-stack"
@@ -769,6 +823,8 @@ export function ApplicationReview({ id }: { id: string }) {
               </details>
             )}
           </Panel>
+        </div>
+        <div hidden={tab !== "activity"}>
           <Panel title="Activity">
             <ol className="activity-list">
               {app.history.map((h, i) => (

@@ -1,5 +1,7 @@
 # Recruiter redesign
 
+The current implementation is a design preview, not complete feature parity. See the [source comparison and known gaps](feature-parity.md).
+
 ## Source and scope
 
 Reviewed the recruiter portal in `sync-ngo-sy/sync-hub-v2`, `apps/recruiter-portal`, at commit `fa80ab1a7e63afbf1447cd9de92db9af6622bf94`. Its screen inventory, domain behavior and `CONTEXT.md` informed this implementation. The source repository was not changed.
@@ -47,3 +49,7 @@ Research focused on official Material and Android guidance, then adapted the int
 The project includes transition-rule tests and reproducible Playwright browser regression tests. Before deployment, the interface was also checked at 320, 393, 768, 1024 and 1440 CSS-pixel widths, with light/dark themes, reduced motion, keyboard tabs, modal dismissal and direct route loading. Automated accessibility scans supplement manual visual inspection; they do not constitute a full accessibility certification.
 
 Release checks on 22 September 2026: lint and production build passed; all five domain tests and five browser suites passed; 90 route/viewport combinations had no document overflow or runtime errors; 34 axe WCAG A/AA scans across desktop light and phone dark themes reported no violations after fixes.
+
+## Review refinements
+
+Record collections offer persisted card/row presentation. Rows follow the admin Requests page with a shared tonal container, separators and spacious actions. Application and candidate detail tabs keep the screen focused and preserve unsent drafts while switching sections. The job editor uses Tiptap and Markdown like the source portal, with safe read-only rendering. See [Tiptap React setup](https://tiptap.dev/docs/editor/getting-started/install/react) and [Markdown integration](https://tiptap.dev/docs/editor/markdown/getting-started/installation).

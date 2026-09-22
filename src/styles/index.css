@@ -94,3 +94,5 @@
 @custom-variant ar (&:where(:lang(ar), :lang(ar) *));
 
 @import './recruiter.css';
+@import './collections.css';
+@import './rich-text.css';

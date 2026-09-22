@@ -1,8 +1,8 @@
 # SYNC Hub · Recruiter portal
 
-A complete Material 3 Expressive redesign of the SYNC Hub recruiter workspace, aligned with the SYNC admin and candidate portals.
+A Material 3 Expressive design preview of the SYNC Hub recruiter workspace, aligned with the SYNC admin and candidate portals. It is not a one-for-one functional migration of the production portal.
 
-**[Open the interactive preview](https://sam-a1a.github.io/sync-recruiter-portal/)** · [Design and implementation notes](docs/design.md)
+**[Open the interactive preview](https://sam-a1a.github.io/sync-recruiter-portal/)** · [Design and implementation notes](docs/design.md) · [Source feature comparison](docs/feature-parity.md)
 
 The repository is private. Its GitHub Pages preview is publicly accessible and contains fictional sample data only. This is a standalone, interactive frontend: changes persist in the current browser; it does not connect to production authentication, recruitment APIs, email, file storage, tracking, or AI services. No production credentials or candidate data are included.
 
@@ -15,6 +15,8 @@ The repository is private. Its GitHub Pages preview is publicly accessible and c
 - **Placements:** confirmed, awaiting confirmation and denied claims.
 - **Workspace:** message templates, tracked links, team membership, shared tags/channels, organization and account settings.
 - **Public pages:** introduction, sample opportunity, request access, sign-in, password reset and invitation acceptance layouts.
+
+Record collections offer persistent **Cards / Rows** controls. Application and candidate records use URL-linked section tabs. Job descriptions support rich-text formatting, preserved as Markdown through draft, review, publishing and editing.
 
 Use **Settings → Organization → Reset preview** to restore the fictional workspace. Account settings expose light/dark/system appearance and contrast preferences. Motion follows the system's reduced-motion setting.
 
