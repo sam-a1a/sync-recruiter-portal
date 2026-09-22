@@ -1,0 +1,56 @@
+/*
+ * The expand/collapse behind <Reveal>.
+ *
+ * Size moves on the expressive SPATIAL spring and opacity on the EFFECTS
+ * spring, which is the M3 split rather than a stylistic one: spatial springs
+ * overshoot by design, and an overshooting opacity would drive past 1 and
+ * flat-spot at the end of the fade.
+ *
+ * Both durations are motion tokens, so they collapse to 1ms under
+ * prefers-reduced-motion and this needs no reduced-motion rule of its own.
+ */
+
+@layer components {
+  .md-reveal {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+
+    /*
+     * A closed row still sits between its siblings, so the parent's gap is
+     * applied on both sides of something zero tall - leaving a hole twice the
+     * gap. Pulling one gap back off leaves exactly the single gap that should
+     * be there once the row is gone.
+     */
+    margin-block-start: calc(-1 * var(--md-reveal-gap, 0px));
+
+    transition:
+      grid-template-rows
+        var(--md-sys-motion-spring-expressive-default-spatial-duration)
+        var(--md-sys-motion-spring-expressive-default-spatial),
+      margin-block-start
+        var(--md-sys-motion-spring-expressive-default-spatial-duration)
+        var(--md-sys-motion-spring-expressive-default-spatial),
+      opacity var(--md-sys-motion-spring-expressive-default-effects-duration)
+        var(--md-sys-motion-spring-expressive-default-effects);
+  }
+
+  .md-reveal[data-open] {
+    grid-template-rows: 1fr;
+    margin-block-start: 0;
+    opacity: 1;
+  }
+
+  /*
+   * The clip. `--md-reveal-bleed` lets content that paints outside its own box
+   * through - a field's floating label sits 8px above its control - and the
+   * matching negative margin takes that room back off the layout, so the row
+   * still measures exactly its content.
+   */
+  .md-reveal__inner {
+    min-block-size: 0;
+    overflow: hidden;
+    padding-block-start: var(--md-reveal-bleed, 0px);
+    margin-block-start: calc(-1 * var(--md-reveal-bleed, 0px));
+  }
+}

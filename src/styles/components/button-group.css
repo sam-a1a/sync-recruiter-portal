@@ -1,0 +1,174 @@
+/*
+ * Connected button group.
+ *
+ * The geometry is m3e's, read from ButtonGroupElement rather than guessed:
+ *
+ *   gap          `--m3e-connected-button-group-spacing`, space25 = 2px
+ *   fill         every button is `flex: 1 1 auto`, so they share the width
+ *   inner shape  `corner.small` on the edges where two buttons meet - the
+ *                first button's end, the last button's start, both on a middle
+ *                one. The group's outer corners keep the button's own full
+ *                radius, so the strip reads as one pill cut into parts.
+ *   pressed      the inner corners tighten again to `corner.extra-small`.
+ */
+
+@layer components {
+  .md-group {
+    display: flex;
+    flex-wrap: nowrap;
+    column-gap: 2px;
+    overflow-x: auto;
+    padding: 5px;
+    margin: -5px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--md-sys-color-outline-variant) transparent;
+  }
+
+  .md-group__button {
+    flex: 1 0 auto;
+    min-inline-size: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    block-size: 48px;
+    padding-inline: 16px;
+    border: 0;
+    /*
+     * m3e's TONAL toggle, from ButtonVariantToken: unselected is the
+     * container role, selected is the solid one. Selected is therefore the
+     * LIGHT half in a dark scheme - which is the whole point. Two dark steps
+     * read as no change at all, and a transition between them looks like
+     * nothing is animating.
+     */
+    background-color: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -webkit-tap-highlight-color: transparent;
+
+    font-family: var(--md-sys-typescale-label-large-font);
+    font-size: var(--md-sys-typescale-label-large-size);
+    line-height: var(--md-sys-typescale-label-large-line-height);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking);
+    font-weight: var(--md-ref-typeface-weight-semibold);
+
+    font-variation-settings:
+      'ROND' var(--md-sys-typeface-rond),
+      'GRAD' var(--md-sys-typeface-grad);
+
+    /*
+     * 24px - half the 48px height - and NOT corner-full.
+     *
+     * A pill and a 24px radius on a 48px box are the same picture, but they
+     * animate completely differently: interpolating 9999px -> 12px spends
+     * almost the whole transition at values still large enough to read as
+     * fully round, then appears to snap at the very end. Animating 24px ->
+     * 12px is visually linear, which is the difference between a morph you
+     * can see and one that looks like nothing happened.
+     */
+    border-radius: 24px;
+
+    /*
+     * border-radius on the EFFECTS spring, never spatial: a spatial spring
+     * overshoots, and an overshooting radius undershoots its target on the
+     * way, which reads as a snap to a hard edge on every press.
+     */
+    transition:
+      background-color var(--md-sys-motion-duration-short4)
+        var(--md-sys-motion-easing-standard),
+      color var(--md-sys-motion-duration-short4)
+        var(--md-sys-motion-easing-standard),
+      font-weight
+        var(--md-sys-motion-spring-expressive-default-spatial-duration)
+        var(--md-sys-motion-spring-expressive-default-spatial),
+      --md-sys-typeface-grad
+        var(--md-sys-motion-spring-expressive-default-spatial-duration)
+        var(--md-sys-motion-spring-expressive-default-spatial),
+      border-radius
+        var(--md-sys-motion-spring-expressive-default-spatial-duration)
+        var(--md-sys-motion-spring-expressive-default-spatial);
+  }
+
+  /* Where two buttons meet. */
+  .md-group__button:not(:last-child) {
+    border-start-end-radius: var(--md-sys-shape-corner-small);
+    border-end-end-radius: var(--md-sys-shape-corner-small);
+  }
+
+  .md-group__button:not(:first-child) {
+    border-start-start-radius: var(--md-sys-shape-corner-small);
+    border-end-start-radius: var(--md-sys-shape-corner-small);
+  }
+
+  /*
+   * Selection is a shape trade, which is the move that makes a connected group
+   * read as Expressive: the selected segment ROUNDS all the way, and the
+   * segments either side of it SQUARE OFF to give it the room. I had this
+   * backwards - squaring the selected one - which is why selecting looked
+   * inert.
+   */
+  .md-group__button[aria-selected='true'] {
+    border-radius: 24px;
+  }
+
+  .md-group__button[aria-selected='true'] + .md-group__button {
+    border-start-start-radius: var(--md-sys-shape-corner-extra-small);
+    border-end-start-radius: var(--md-sys-shape-corner-extra-small);
+  }
+
+  .md-group__button:has(+ .md-group__button[aria-selected='true']) {
+    border-start-end-radius: var(--md-sys-shape-corner-extra-small);
+    border-end-end-radius: var(--md-sys-shape-corner-extra-small);
+  }
+
+  .md-group__button:not(:last-child):active {
+    border-start-end-radius: var(--md-sys-shape-corner-extra-small);
+    border-end-end-radius: var(--md-sys-shape-corner-extra-small);
+  }
+
+  .md-group__button:not(:first-child):active {
+    border-start-start-radius: var(--md-sys-shape-corner-extra-small);
+    border-end-start-radius: var(--md-sys-shape-corner-extra-small);
+  }
+
+  .md-group__button:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--md-sys-color-on-secondary-container)
+        calc(var(--md-sys-state-hover-state-layer-opacity) * 100%),
+      var(--md-sys-color-secondary-container)
+    );
+  }
+
+  .md-group__button[aria-selected='true'] {
+    background-color: var(--md-sys-color-secondary);
+    color: var(--md-sys-color-on-secondary);
+
+    /*
+     * Selection moves three things at once, the way every other toggle in
+     * this system does: the container and content roles swap, the label
+     * travels the wght axis to bold, and the outer corner morphs from full to
+     * medium - m3e's `selectedShapeRound` for a round-shaped toggle. The inner
+     * corners stay put, so the strip keeps its geometry.
+     */
+    font-weight: var(--md-ref-typeface-weight-bold);
+    --md-sys-typeface-grad: 50;
+  }
+
+  .md-group__button[aria-selected='true']:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--md-sys-color-on-secondary)
+        calc(var(--md-sys-state-hover-state-layer-opacity) * 100%),
+      var(--md-sys-color-secondary)
+    );
+  }
+
+  .md-group__button:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+    z-index: 1;
+  }
+}

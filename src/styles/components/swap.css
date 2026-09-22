@@ -1,0 +1,52 @@
+/*
+ * The crossfade behind <Swap>.
+ *
+ * Both labels occupy the same grid cell, so the outgoing one fades out while
+ * the incoming one fades in - simultaneously, in a box that never changes size.
+ * Fading out and then in would show a gap of nothing; resizing the box would
+ * shove the layout around mid-fade. Neither reads as seamless.
+ *
+ * An effects spring, not a spatial one: opacity is clamped at 1, so overshoot
+ * would just flat-spot at the end of the fade.
+ */
+
+@layer components {
+  .md-swap {
+    display: grid;
+  }
+
+  /*
+   * Each layer centres its own content rather than leaving it inline.
+   *
+   * An <Icon> is inline-level, so in a plain block it lands on the text
+   * baseline - and an 18px icon box sitting on the baseline of 14px text rides
+   * visibly high, because the icon is taller than the text's cap height. As a
+   * flex line it is centred against the layer instead, which is what lines it
+   * up with the label beside it.
+   */
+  .md-swap__layer {
+    grid-area: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity
+      var(--md-sys-motion-spring-expressive-default-effects-duration)
+      var(--md-sys-motion-spring-expressive-default-effects);
+  }
+
+  /*
+   * Centring is right inside a button, where the box is as wide as the longer
+   * label and the shorter one would otherwise sit off to one side. Running
+   * text wants the start edge.
+   */
+  .md-swap--start .md-swap__layer {
+    justify-content: flex-start;
+  }
+
+  .md-swap__layer[data-active] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}

@@ -1,0 +1,478 @@
+/*
+ * Material 3 Expressive buttons.
+ *
+ * Every variant fills its icon on hover and focus. That is one declaration
+ * here rather than a rule per component, because the FILL transition lives on
+ * .md-icon itself (components/icon.css).
+ *
+ * Shape morphs on press: full -> large. Expressive uses corner radius as the
+ * press feedback, so a button does not need to move or scale to feel pressed.
+ */
+
+@layer components {
+  .md-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+
+    block-size: 40px;
+    padding-inline: 24px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+
+    font-family: var(--md-sys-typescale-label-large-font);
+    font-size: var(--md-sys-typescale-label-large-size);
+    line-height: var(--md-sys-typescale-label-large-line-height);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking);
+
+    /*
+     * A label never wraps. The height is fixed at 40px, so a label that broke
+     * onto three lines spilled out of the box and the outline was drawn
+     * straight through the words — it read as struck-through text. If there is
+     * no room for the button, the row it sits in wraps instead.
+     */
+    white-space: nowrap;
+
+    background: none;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    /*
+     * Two transitions with different jobs, matching m3e's ButtonStyle:
+     *
+     *   colour     short4 + standard easing. A plain 200ms fade.
+     *   radius     the *effects* spring - critically damped.
+     *
+     * The radius must not use a spatial spring. Those overshoot by design, and
+     * an overshooting radius undershoots its target on the way: the corner
+     * goes sharper than 8px before settling back, which reads as the button
+     * snapping to a hard edge on every press.
+     */
+    /*
+     * Re-declared so the type axes resolve against THIS element.
+     * font-variation-settings is inherited, and a var() inside it is
+     * substituted on the element that declares it - html - so a GRAD set
+     * further down the tree would otherwise never be seen. See
+     * tokens/motion.css for why the axes are registered properties.
+     */
+    font-variation-settings:
+      'ROND' var(--md-sys-typeface-rond),
+      'GRAD' var(--md-sys-typeface-grad);
+
+    transition:
+      background-color var(--md-sys-motion-duration-short4)
+        var(--md-sys-motion-easing-standard),
+      color var(--md-sys-motion-duration-short4)
+        var(--md-sys-motion-easing-standard),
+      box-shadow var(--md-sys-motion-duration-short4)
+        var(--md-sys-motion-easing-standard),
+      font-weight
+        var(--md-sys-motion-spring-expressive-default-spatial-duration)
+        var(--md-sys-motion-spring-expressive-default-spatial),
+      --md-sys-typeface-grad
+        var(--md-sys-motion-spring-expressive-default-spatial-duration)
+        var(--md-sys-motion-spring-expressive-default-spatial),
+      border-radius var(--md-sys-motion-spring-expressive-fast-effects-duration)
+        var(--md-sys-motion-spring-expressive-fast-effects);
+  }
+
+  /*
+   * An icon leading a label sits closer to the edge than the text would.
+   *
+   * Direct child only. Without the `>` this also matched an icon nested in a
+   * hover-reveal slot - which is a first child of ITS parent - and quietly
+   * gave the button 16px of leading padding against 24px trailing, throwing
+   * the label off centre on buttons that appeared to have no icon at all.
+   */
+  .md-button:has(> .md-icon:first-child) {
+    padding-inline-start: 16px;
+  }
+
+  .md-button .md-icon {
+    --md-icon-size: 18px;
+    --md-icon-opsz: 18;
+    position: relative;
+    z-index: 1;
+  }
+
+  .md-button > :not(.md-button__state) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .md-button:hover,
+  .md-button:focus-visible {
+    --md-icon-fill: 1;
+  }
+
+  .md-button:active {
+    border-radius: var(--md-sys-shape-corner-small);
+  }
+
+  .md-button:disabled {
+    cursor: not-allowed;
+    --md-icon-fill: 0;
+  }
+
+  /* --- Toggle ---
+   * Selection is not a wash over the resting style. M3 Expressive changes
+   * three things at once, and all three are already in the transition list
+   * above, so they move together:
+   *
+   *   shape      corner-full (pill) -> corner-medium. The pill is the
+   *              unselected state; a selected toggle squares off.
+   *   colour     the container and content roles swap, so a selected toggle
+   *              reads as a filled control rather than a tinted one.
+   *   icon       the FILL axis goes 0 -> 1, which is why the icon has to be a
+   *              variable font glyph and not two separate assets.
+   *
+   * Keyed off aria-pressed: the state is already in the semantics, so it does
+   * not also need a class.
+   */
+  .md-button[aria-pressed] {
+    border-radius: var(--md-sys-shape-corner-full);
+  }
+
+  /*
+   * Emphasis rides GRAD, not wght. GRAD thickens the stroke WITHOUT changing
+   * advance widths, so a selected label gains weight without the button
+   * resizing underneath a shape morph that is already in flight. wght would
+   * reflow the line mid-animation.
+   */
+  .md-button[aria-pressed='true'] {
+    border-radius: var(--md-sys-shape-corner-medium);
+    --md-icon-fill: 1;
+    --md-sys-typeface-grad: 50;
+  }
+
+  /*
+   * Pressed morphs tighter still, selected or not. This needs to outrank the
+   * rule above rather than sit beside it - `.md-button:active` alone loses to
+   * `[aria-pressed='true']` on source order at equal specificity, which kills
+   * the press feedback on exactly the buttons that have the most going on.
+   */
+  .md-button[aria-pressed]:active {
+    border-radius: var(--md-sys-shape-corner-small);
+  }
+
+  .md-button--filled[aria-pressed='false'] {
+    background-color: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .md-button--filled[aria-pressed='true'] {
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+  }
+
+  .md-icon-button[aria-pressed='true'] {
+    --md-icon-fill: 1;
+  }
+
+  /* State layer: the button's own content colour, per M3. */
+  .md-button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition-property: opacity;
+    transition-timing-function: var(--md-sys-motion-spring-expressive-fast-effects);
+    transition-duration: var(--md-sys-motion-spring-expressive-fast-effects-duration);
+  }
+
+  .md-button:hover::after {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+
+  .md-button:focus-visible::after {
+    opacity: var(--md-sys-state-focus-state-layer-opacity);
+  }
+
+  .md-button:active::after {
+    opacity: var(--md-sys-state-pressed-state-layer-opacity);
+  }
+
+  .md-button:disabled::after {
+    opacity: 0;
+  }
+
+  /* --- Hover icon ---
+   * An icon that is not there until the pointer is, and a button that widens
+   * to make room for it.
+   *
+   * The icon is ABSOLUTE. A zero-width flex item is not free: it still sits in
+   * the line, its margins still count, and every one of those pixels comes off
+   * the label's centring - which is why the label sat left of centre with dead
+   * space beside it. Out of flow it contributes nothing, so at rest the label
+   * is centred against plain symmetric padding.
+   *
+   * The width comes from padding-inline-start instead. The button is the last
+   * thing in a right-aligned row, so growing its leading padding pushes its
+   * left edge out and leaves the label where it was on screen: the icon
+   * arrives, and nothing that was already readable moves.
+   */
+  .md-button > .md-button__reveal {
+    position: absolute;
+    z-index: 1;
+    inset-inline-start: 18px;
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity
+      var(--md-sys-motion-spring-expressive-default-effects-duration)
+      var(--md-sys-motion-spring-expressive-default-effects);
+  }
+
+  /*
+   * Restated in full because a transition list cannot be appended to - this is
+   * the base button's list plus padding-inline-start.
+   */
+  .md-button--has-reveal {
+    transition:
+      background-color var(--md-sys-motion-duration-short4)
+        var(--md-sys-motion-easing-standard),
+      color var(--md-sys-motion-duration-short4)
+        var(--md-sys-motion-easing-standard),
+      box-shadow var(--md-sys-motion-duration-short4)
+        var(--md-sys-motion-easing-standard),
+      font-weight
+        var(--md-sys-motion-spring-expressive-default-spatial-duration)
+        var(--md-sys-motion-spring-expressive-default-spatial),
+      --md-sys-typeface-grad
+        var(--md-sys-motion-spring-expressive-default-spatial-duration)
+        var(--md-sys-motion-spring-expressive-default-spatial),
+      padding-inline-start
+        var(--md-sys-motion-spring-expressive-default-spatial-duration)
+        var(--md-sys-motion-spring-expressive-default-spatial),
+      border-radius var(--md-sys-motion-spring-expressive-fast-effects-duration)
+        var(--md-sys-motion-spring-expressive-fast-effects);
+  }
+
+  /* Stated so the rest state cannot be inherited from anything else. */
+  .md-button--has-reveal {
+    padding-inline: 24px;
+  }
+
+  .md-button--has-reveal:hover,
+  .md-button--has-reveal:focus-visible {
+    padding-inline-start: 52px;
+  }
+
+  .md-button--has-reveal:hover .md-button__reveal,
+  .md-button--has-reveal:focus-visible .md-button__reveal {
+    opacity: 1;
+  }
+
+  /* A dead button does not answer the pointer. */
+  .md-button--has-reveal:disabled:hover {
+    padding-inline-start: 24px;
+  }
+
+  .md-button--has-reveal:disabled:hover .md-button__reveal {
+    opacity: 0;
+  }
+
+  /* --- Variants --- */
+
+  .md-button--filled {
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    font-weight: var(--md-sys-typescale-label-large-emphasized-weight);
+  }
+
+  .md-button--tonal {
+    background-color: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+  }
+
+  .md-button--outlined {
+    border: 1px solid var(--md-sys-color-outline);
+    color: var(--md-sys-color-primary);
+  }
+
+  .md-button--text {
+    padding-inline: 12px;
+    color: var(--md-sys-color-primary);
+  }
+
+  .md-button--text:has(> .md-icon:first-child) {
+    padding-inline-start: 12px;
+  }
+
+  /* Destructive is outlined in the error role, never filled - a delete button
+     that shouts is a delete button people press by accident. */
+  .md-button--danger {
+    border: 1px solid var(--md-sys-color-error);
+    color: var(--md-sys-color-error);
+  }
+
+  .md-button--filled:disabled,
+  .md-button--tonal:disabled {
+    background-color: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) 12%,
+      transparent
+    );
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  }
+
+  .md-button--outlined:disabled,
+  .md-button--text:disabled,
+  .md-button--danger:disabled {
+    border-color: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) 12%,
+      transparent
+    );
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  }
+
+  /* --- Sizes --- */
+
+  .md-button--small {
+    block-size: 36px;
+    padding-inline: 16px;
+    font-size: var(--md-sys-typescale-label-medium-size);
+  }
+
+  .md-button--small:has(.md-icon:first-child) {
+    padding-inline-start: 12px;
+  }
+
+  /* --- Icon button --- */
+
+  .md-icon-button {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    inline-size: 40px;
+    block-size: 40px;
+    flex: none;
+    padding: 0;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: none;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    transition:
+      background-color var(--md-sys-motion-duration-short4)
+        var(--md-sys-motion-easing-standard),
+      color var(--md-sys-motion-duration-short4)
+        var(--md-sys-motion-easing-standard),
+      border-radius var(--md-sys-motion-spring-expressive-fast-effects-duration)
+        var(--md-sys-motion-spring-expressive-fast-effects);
+  }
+
+  .md-icon-button .md-icon {
+    --md-icon-size: 20px;
+    --md-icon-opsz: 20;
+    position: relative;
+    z-index: 1;
+  }
+
+  .md-icon-button:hover,
+  .md-icon-button:focus-visible {
+    --md-icon-fill: 1;
+  }
+
+  .md-icon-button:active {
+    border-radius: var(--md-sys-shape-corner-small);
+  }
+
+  /*
+   * An outlined icon button. The ring is always there and hover washes the
+   * inside of it, rather than the container switching to a different colour -
+   * a filled circle at rest reads as a selected state.
+   */
+  .md-icon-button--outlined {
+    border: 1px solid var(--md-sys-color-outline-variant);
+
+    transition:
+      background-color
+        var(--md-sys-motion-spring-expressive-default-effects-duration)
+        var(--md-sys-motion-spring-expressive-default-effects),
+      border-color
+        var(--md-sys-motion-spring-expressive-default-effects-duration)
+        var(--md-sys-motion-spring-expressive-default-effects),
+      color var(--md-sys-motion-spring-expressive-default-effects-duration)
+        var(--md-sys-motion-spring-expressive-default-effects),
+      border-radius
+        var(--md-sys-motion-spring-expressive-fast-effects-duration)
+        var(--md-sys-motion-spring-expressive-fast-effects);
+  }
+
+  .md-icon-button--outlined:hover {
+    border-color: var(--md-sys-color-outline);
+    color: var(--md-sys-color-on-surface);
+    --md-icon-fill: 1;
+  }
+
+  /*
+   * The press morph and the icon's motion are m3e's, not invented:
+   * IconButtonSizeToken gives `shapePressedMorph: corner.small` against a
+   * `shapeRound: corner.full` rest, and IconButtonStyle transitions the icon's
+   * own transform on `spring.fastEffects`.
+   *
+   * The radius rides the EFFECTS spring for the reason button.css already
+   * documents - a spatial spring overshoots, and an overshooting radius
+   * undershoots its target on the way, which reads as a snap to a hard edge.
+   */
+  .md-icon-button--outlined:active {
+    border-radius: var(--md-sys-shape-corner-small);
+  }
+
+  .md-icon-button .md-icon {
+    transition: scale
+      var(--md-sys-motion-spring-expressive-fast-effects-duration)
+      var(--md-sys-motion-spring-expressive-fast-effects);
+  }
+
+  .md-icon-button:hover .md-icon,
+  .md-icon-button:focus-visible .md-icon {
+    scale: 1.12;
+  }
+
+  .md-icon-button--danger {
+    color: var(--md-sys-color-error);
+  }
+
+  .md-icon-button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition-property: opacity;
+    transition-timing-function: var(--md-sys-motion-spring-expressive-fast-effects);
+    transition-duration: var(--md-sys-motion-spring-expressive-fast-effects-duration);
+  }
+
+  .md-icon-button:hover::after {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+
+  .md-icon-button:focus-visible::after {
+    opacity: var(--md-sys-state-focus-state-layer-opacity);
+  }
+
+  .md-icon-button:active::after {
+    opacity: var(--md-sys-state-pressed-state-layer-opacity);
+  }
+}

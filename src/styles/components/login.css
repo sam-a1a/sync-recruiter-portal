@@ -1,0 +1,203 @@
+/*
+ * Sign-in, as a split screen: the form on one side, the mark on the other.
+ *
+ * Both halves share the page background. A tinted panel would make the mark's
+ * half read as a separate surface, and there is nothing on it to interact with
+ * - it is a brand rest, not a container.
+ *
+ * Below 900px there is not enough width for two readable columns, so the mark
+ * half is dropped rather than squeezed. That is why the mark and wordmark also
+ * sit above the form: on a narrow screen they are the only place the product
+ * names itself.
+ */
+
+@layer components {
+  .login {
+    min-block-size: 100dvh;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .login__form-pane {
+    display: grid;
+    place-items: center;
+    padding: 24px;
+  }
+
+  .login__column {
+    inline-size: 100%;
+    max-inline-size: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  /* --- Brand, above the form --- */
+
+  .login__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .login__brand-mark {
+    inline-size: 40px;
+    block-size: auto;
+  }
+
+  .login__brand-name {
+    font-family: var(--md-sys-typescale-title-large-font);
+    font-size: var(--md-sys-typescale-title-large-size);
+    line-height: var(--md-sys-typescale-title-large-line-height);
+    letter-spacing: var(--md-sys-typescale-title-large-tracking);
+    font-weight: var(--md-sys-typescale-title-large-emphasized-weight);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  /* --- Heading --- */
+
+  .login__intro {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .login__subtitle {
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  /* No gap: only one of these is ever open, and a gap around a closed row
+     would be space held for something that is not there. */
+  .login__subtitles {
+    display: block;
+  }
+
+  .login__spam {
+    margin-block-start: 8px;
+  }
+
+  /* --- Form --- */
+
+  .login__form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    /* Every row in here is a <Reveal>; this is the gap each one swallows
+       while it is closed. */
+    --md-reveal-gap: 24px;
+  }
+
+  /* A field's floating label sits 8px above its control, so the clip needs
+     letting out or the label is shaved off as the row opens. */
+  .login__field {
+    --md-reveal-bleed: 10px;
+  }
+
+  /* A full-width action: this screen has exactly one thing to do. */
+  .login__submit {
+    inline-size: 100%;
+    block-size: 48px;
+  }
+
+  /*
+   * The toggle is a real toggle button, so the control that switches panels
+   * carries its own selected state - and with it the icon fill and the
+   * state-layer wash every other M3 button has. Its width is the wider of its
+   * two labels, set once by <Swap>, so it does not resize as the label
+   * crossfades.
+   *
+   * It is centred until the confirmation, then moves to the start so
+   * it lines up with the text above it.
+   *
+   * Animatable grid tracks, not `align-self` or `justify-content` - neither of
+   * those interpolates, they just jump. The leading spacer goes 1fr -> 0fr and
+   * carries the button across with it, on the spatial spring. Same technique
+   * as <Reveal>, one axis over.
+   *
+   * Tracks are writing-direction relative, so this reads as "to the start" in
+   * RTL too, without a second rule.
+   */
+  .login__toggle-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    transition: grid-template-columns
+      var(--md-sys-motion-spring-expressive-default-spatial-duration)
+      var(--md-sys-motion-spring-expressive-default-spatial);
+  }
+
+  .login__toggle-row[data-align='start'] {
+    grid-template-columns: 0fr auto 1fr;
+  }
+
+  /*
+   * Both buttons thicken to bold under the pointer, travelling along the wght
+   * axis rather than snapping between two cut weights - the font is variable,
+   * so every weight in between actually exists. They start from different
+   * places, which is the hierarchy: the submit button is the action, the
+   * toggle is the way out.
+   *
+   * wght moves advance widths. On the submit button that costs nothing, since
+   * it is full width and only the label inside it grows. The toggle travels
+   * further - regular to bold - so it breathes wider as it thickens, which is
+   * fine where it sits: centred in its own grid track with nothing beside it
+   * to shove. The SELECTED state uses GRAD instead, precisely because it fires
+   * during the shape morph, where a width change at the same time would read
+   * as a wobble.
+   *
+   * A disabled button does not answer the pointer - thickening under a cursor
+   * that cannot press it would promise something that is not there.
+   */
+  .login__submit {
+    font-weight: var(--md-ref-typeface-weight-semibold);
+  }
+
+  .login__toggle {
+    grid-column: 2;
+    font-weight: var(--md-ref-typeface-weight-regular);
+  }
+
+  .login__submit:not(:disabled):hover,
+  .login__submit:not(:disabled):focus-visible,
+  .login__toggle:hover,
+  .login__toggle:focus-visible {
+    font-weight: var(--md-ref-typeface-weight-bold);
+  }
+
+  /*
+   * Selected goes to `secondary`, not the `primary` a filled toggle takes by
+   * default. Selected means "Back to Login" here, which sits directly under the
+   * submit button - and two solid primary containers stacked read as two equal
+   * calls to action when only the one above is.
+   */
+  .login__toggle[aria-pressed='true'] {
+    background-color: var(--md-sys-color-secondary);
+    color: var(--md-sys-color-on-secondary);
+  }
+
+  /* --- Mark half --- */
+
+  .login__brand-pane {
+    display: none;
+    place-items: center;
+    padding: 48px;
+  }
+
+  .login__brand-pane-mark {
+    inline-size: min(320px, 60%);
+    block-size: auto;
+  }
+
+  @media (min-width: 900px) {
+    .login {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .login__brand-pane {
+      display: grid;
+    }
+  }
+}

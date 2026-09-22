@@ -1,0 +1,81 @@
+/*
+ * The chrome's circular control - theme, sign out.
+ *
+ * Shared by the rail and the compact top bar; it was `.nav-rail__utility`
+ * until the bar needed the same button and a second copy would have started
+ * drifting from the first.
+ */
+
+@layer components {
+  .utility-button {
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: 48px;
+    block-size: 48px;
+    padding: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+
+    /*
+     * An outlined circle, not a filled one: the ring is always there, and
+     * hover washes the inside of it with a state layer rather than switching
+     * the container to a different colour. A filled chip at rest would read as
+     * a selected state on controls that have none.
+     */
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background-color: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    transition:
+      background-color
+        var(--md-sys-motion-spring-expressive-default-effects-duration)
+        var(--md-sys-motion-spring-expressive-default-effects),
+      border-color
+        var(--md-sys-motion-spring-expressive-default-effects-duration)
+        var(--md-sys-motion-spring-expressive-default-effects),
+      color var(--md-sys-motion-spring-expressive-default-effects-duration)
+        var(--md-sys-motion-spring-expressive-default-effects),
+      border-radius
+        var(--md-sys-motion-spring-expressive-fast-effects-duration)
+        var(--md-sys-motion-spring-expressive-fast-effects);
+  }
+
+  .utility-button:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface)
+        calc(var(--md-sys-state-hover-state-layer-opacity) * 100%),
+      transparent
+    );
+    border-color: var(--md-sys-color-outline);
+    color: var(--md-sys-color-on-surface);
+    --md-icon-fill: 1;
+  }
+
+  /*
+   * Press feedback is a gentle shape settle - corner-large on a 48px circle is
+   * a visible flattening without ever reading as a square. The earlier
+   * corner-medium went much further, and on a spatial spring it undershot past
+   * its own target, which is what made a press look like it snapped to a hard
+   * edge.
+   */
+  .utility-button:active {
+    border-radius: var(--md-sys-shape-corner-large);
+  }
+
+  /*
+   * The logout glyph draws a bracket with an arrow leaving it, so its weight
+   * sits left of centre and the circle reads as mis-centred even though the
+   * box is not. Nudged the way the arrow points.
+   */
+  .utility-button--logout .md-icon {
+    translate: 2px 0;
+  }
+
+  .utility-button:focus-visible {
+    outline: 3px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+  }
+}
