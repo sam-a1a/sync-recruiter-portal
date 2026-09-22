@@ -1,11 +1,15 @@
 import type { InputHTMLAttributes } from "react";
 export function Checkbox({
   label,
+  showLabel = false,
   ...props
-}: Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { label: string }) {
+}: Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
+  label: string;
+  showLabel?: boolean;
+}) {
   return (
     <label
-      className="expressive-checkbox"
+      className={`expressive-checkbox ${showLabel ? "expressive-checkbox--labelled" : ""}`}
       title={props.disabled ? `${label} — no compatible move available` : label}
     >
       <input {...props} type="checkbox" aria-label={label} />
@@ -23,6 +27,7 @@ export function Checkbox({
           </svg>
         </span>
       </span>
+      {showLabel && <span className="checkbox-label">{label}</span>}
     </label>
   );
 }

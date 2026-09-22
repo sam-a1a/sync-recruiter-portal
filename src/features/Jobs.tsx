@@ -1,3 +1,8 @@
+import { SearchDialog } from "../components/SearchDialog";
+import { SkillIcon, LanguageFlag } from "../components/CatalogueIcon";
+import { skillCatalogue, languages } from "../catalogues/people";
+import { Checkbox } from "../components/Checkbox";
+import { AnimatedRegion } from "../components/AnimatedRegion";
 import { useState, lazy, Suspense } from "react";
 import {
   Header,
@@ -117,17 +122,23 @@ export function Jobs() {
           );
           const waiting = applications.filter((a) => a.stage === "New").length;
           return (
-            <article className="job-card" key={j.id}>
+            <article
+              className="job-card"
+              key={j.id}
+              style={{ viewTransitionName: `job-${j.id}` }}
+            >
               <div className="job-card-top">
                 <span className="job-symbol">
                   <Icon name="work" />
                 </span>
-                <Status value={j.status} />
               </div>
               <Link to={`/jobs/${j.id}`} className="job-card-title">
                 <h2>{j.title}</h2>
               </Link>
               <p className="muted">{j.department}</p>
+              <div className="job-state">
+                <Status value={j.status} />
+              </div>
               <div className="job-card-facts">
                 <span>
                   <Icon name="location_on" size={18} />
@@ -413,6 +424,10 @@ const blankJob: Job = {
   criteria: structuredClone(emptyCriteria),
 };
 export function JobWizard() {
+  const [picking, setPicking] = useState<{
+    kind: "skill" | "language";
+    index?: number;
+  } | null>(null);
   const { data, setData, notify } = useWorkspace();
   const { params, set } = useQuery();
   const edit = params.get("edit");
@@ -524,382 +539,401 @@ export function JobWizard() {
           {error}
         </p>
       )}
-      <Panel
-        title={
-          [
-            "Tell people about the role",
-            "Set your screening criteria",
-            "Everything in one place",
-          ][current]
-        }
-      >
-        {current === 0 ? (
-          <div className="form-stack">
-            <div className="form-grid">
-              <TextField
-                label="Job title"
-                value={draft.title}
-                required
-                onChange={(e) => update({ title: e.target.value })}
-              />
-              <TextField
-                label="Team or department"
-                value={draft.department}
-                onChange={(e) => update({ department: e.target.value })}
-              />
+      <AnimatedRegion changeKey={current}>
+        <Panel
+          title={
+            [
+              "Tell people about the role",
+              "Set your screening criteria",
+              "Everything in one place",
+            ][current]
+          }
+        >
+          {current === 0 ? (
+            <div className="form-stack">
+              <div className="form-grid">
+                <TextField
+                  label="Job title"
+                  value={draft.title}
+                  required
+                  onChange={(e) => update({ title: e.target.value })}
+                />
+                <TextField
+                  label="Team or department"
+                  value={draft.department}
+                  onChange={(e) => update({ department: e.target.value })}
+                />
+              </div>
+              <Suspense
+                fallback={<p role="status">Loading description editor…</p>}
+              >
+                <RichTextEditor
+                  label="Job description"
+                  value={draft.description}
+                  onChange={(description) => update({ description })}
+                />
+              </Suspense>
+              <div className="form-grid">
+                <SelectField
+                  label="Location"
+                  value={draft.location}
+                  onChange={(e) => update({ location: e.target.value })}
+                >
+                  {locations.map((l) => (
+                    <option key={l}>{l}</option>
+                  ))}
+                </SelectField>
+                <SelectField
+                  label="Work arrangement"
+                  value={draft.mode}
+                  onChange={(e) => update({ mode: e.target.value })}
+                >
+                  {["On-site", "Hybrid", "Remote"].map((l) => (
+                    <option key={l}>{l}</option>
+                  ))}
+                </SelectField>
+                <SelectField
+                  label="Employment type"
+                  value={draft.type}
+                  onChange={(e) => update({ type: e.target.value })}
+                >
+                  {[
+                    "Full time",
+                    "Part time",
+                    "Contract",
+                    "Temporary",
+                    "Internship",
+                    "Volunteer",
+                  ].map((l) => (
+                    <option key={l}>{l}</option>
+                  ))}
+                </SelectField>
+                <TextField
+                  label="Closing date"
+                  type="date"
+                  required
+                  value={draft.closing}
+                  onChange={(e) => update({ closing: e.target.value })}
+                />
+              </div>
             </div>
-            <Suspense
-              fallback={<p role="status">Loading description editor…</p>}
-            >
-              <RichTextEditor
-                label="Job description"
-                value={draft.description}
-                onChange={(description) => update({ description })}
-              />
-            </Suspense>
-            <div className="form-grid">
-              <SelectField
-                label="Location"
-                value={draft.location}
-                onChange={(e) => update({ location: e.target.value })}
-              >
-                {locations.map((l) => (
-                  <option key={l}>{l}</option>
-                ))}
-              </SelectField>
-              <SelectField
-                label="Work arrangement"
-                value={draft.mode}
-                onChange={(e) => update({ mode: e.target.value })}
-              >
-                {["On-site", "Hybrid", "Remote"].map((l) => (
-                  <option key={l}>{l}</option>
-                ))}
-              </SelectField>
-              <SelectField
-                label="Employment type"
-                value={draft.type}
-                onChange={(e) => update({ type: e.target.value })}
-              >
-                {[
-                  "Full time",
-                  "Part time",
-                  "Contract",
-                  "Temporary",
-                  "Internship",
-                  "Volunteer",
-                ].map((l) => (
-                  <option key={l}>{l}</option>
-                ))}
-              </SelectField>
+          ) : current === 1 ? (
+            <div className="form-stack">
+              <p className="muted">
+                Choose what matters. Screening supports your review; it never
+                makes the hiring decision.
+              </p>
               <TextField
-                label="Closing date"
-                type="date"
-                required
-                value={draft.closing}
-                onChange={(e) => update({ closing: e.target.value })}
+                label="Minimum years of experience"
+                type="number"
+                min="0"
+                max="99"
+                step="0.5"
+                value={draft.criteria.years}
+                onChange={(e) => criteria({ years: Number(e.target.value) })}
               />
-            </div>
-          </div>
-        ) : current === 1 ? (
-          <div className="form-stack">
-            <p className="muted">
-              Choose what matters. Screening supports your review; it never
-              makes the hiring decision.
-            </p>
-            <TextField
-              label="Minimum years of experience"
-              type="number"
-              min="0"
-              max="99"
-              step="0.5"
-              value={draft.criteria.years}
-              onChange={(e) => criteria({ years: Number(e.target.value) })}
-            />
-            <fieldset className="form-section">
-              <legend>Skills</legend>
-              {draft.criteria.skills.map((s, i) => (
-                <div className="criteria-row" key={i}>
-                  <SelectField
-                    label={`Skill ${i + 1}`}
-                    value={s.name}
-                    onChange={(e) =>
-                      criteria({
-                        skills: draft.criteria.skills.map((x, n) =>
-                          i === n ? { ...x, name: e.target.value } : x,
-                        ),
-                      })
-                    }
-                  >
-                    {skills
-                      .filter(
-                        (name) =>
-                          name === s.name ||
-                          !draft.criteria.skills.some((x) => x.name === name),
-                      )
-                      .map((name) => (
-                        <option key={name}>{name}</option>
-                      ))}
-                  </SelectField>
-                  <SelectField
-                    label="Importance"
-                    value={s.importance}
-                    onChange={(e) =>
-                      criteria({
-                        skills: draft.criteria.skills.map((x, n) =>
-                          i === n ? { ...x, importance: e.target.value } : x,
-                        ),
-                      })
-                    }
-                  >
-                    {["Required", "Preferred", "Optional"].map((x) => (
-                      <option key={x}>{x}</option>
-                    ))}
-                  </SelectField>
-                  <IconButton
-                    icon="close"
-                    label={`Remove skill ${i + 1}`}
-                    onClick={() =>
-                      criteria({
-                        skills: draft.criteria.skills.filter((_, n) => n !== i),
-                      })
-                    }
-                  />
-                </div>
-              ))}
-              <Button
-                variant="tonal"
-                icon="add"
-                disabled={draft.criteria.skills.length >= skills.length}
-                onClick={() =>
-                  criteria({
-                    skills: [
-                      ...draft.criteria.skills,
-                      {
-                        name: skills.find(
-                          (s) =>
-                            !draft.criteria.skills.some((x) => x.name === s),
-                        )!,
-                        importance: "Required",
-                      },
-                    ],
-                  })
-                }
-              >
-                Add skill
-              </Button>
-            </fieldset>
-            <fieldset className="form-section">
-              <legend>Languages</legend>
-              {draft.criteria.languages.map((l, i) => (
-                <div className="criteria-row" key={i}>
-                  <SelectField
-                    label={`Language ${i + 1}`}
-                    value={l.name}
-                    onChange={(e) =>
-                      criteria({
-                        languages: draft.criteria.languages.map((x, n) =>
-                          i === n ? { ...x, name: e.target.value } : x,
-                        ),
-                      })
-                    }
-                  >
-                    {["Arabic", "English", "French", "Kurdish"]
-                      .filter(
-                        (name) =>
-                          name === l.name ||
-                          !draft.criteria.languages.some(
-                            (x) => x.name === name,
+              <fieldset className="form-section">
+                <legend>Skills</legend>
+                {draft.criteria.skills.map((s, i) => (
+                  <div className="criteria-row" key={i}>
+                    <button
+                      type="button"
+                      className="catalogue-field"
+                      aria-label={`Skill ${i + 1}: ${s.name}`}
+                      onClick={() => setPicking({ kind: "skill", index: i })}
+                    >
+                      <SkillIcon name={s.name} />
+                      <span>
+                        <small>Skill {i + 1}</small>
+                        {s.name}
+                      </span>
+                      <Icon name="expand_more" />
+                    </button>
+                    <SelectField
+                      label="Importance"
+                      value={s.importance}
+                      onChange={(e) =>
+                        criteria({
+                          skills: draft.criteria.skills.map((x, n) =>
+                            i === n ? { ...x, importance: e.target.value } : x,
                           ),
-                      )
-                      .map((x) => (
+                        })
+                      }
+                    >
+                      {["Required", "Preferred", "Optional"].map((x) => (
                         <option key={x}>{x}</option>
                       ))}
-                  </SelectField>
-                  <SelectField
-                    label="Minimum proficiency"
-                    value={l.proficiency}
-                    onChange={(e) =>
-                      criteria({
-                        languages: draft.criteria.languages.map((x, n) =>
-                          i === n ? { ...x, proficiency: e.target.value } : x,
-                        ),
-                      })
-                    }
-                  >
-                    {[
-                      "Beginner",
-                      "Intermediate",
-                      "Advanced",
-                      "Fluent",
-                      "Native",
-                    ].map((x) => (
-                      <option key={x}>{x}</option>
-                    ))}
-                  </SelectField>
-                  <IconButton
-                    icon="close"
-                    label={`Remove language ${i + 1}`}
-                    onClick={() =>
-                      criteria({
-                        languages: draft.criteria.languages.filter(
-                          (_, n) => n !== i,
-                        ),
-                      })
-                    }
-                  />
-                </div>
-              ))}
-              <Button
-                variant="tonal"
-                icon="add"
-                disabled={draft.criteria.languages.length >= 4}
-                onClick={() =>
-                  criteria({
-                    languages: [
-                      ...draft.criteria.languages,
-                      {
-                        name: ["Arabic", "English", "French", "Kurdish"].find(
-                          (name) =>
-                            !draft.criteria.languages.some(
-                              (l) => l.name === name,
-                            ),
-                        )!,
-                        proficiency: "Fluent",
-                      },
-                    ],
-                  })
-                }
-              >
-                Add language
-              </Button>
-            </fieldset>
-            <fieldset className="form-section">
-              <legend>Application questions</legend>
-              {draft.criteria.questions.map((q, i) => (
-                <div className="question-editor" key={i}>
-                  <div className="actions spread">
-                    <strong>Question {i + 1}</strong>
+                    </SelectField>
                     <IconButton
-                      icon="delete"
-                      label={`Remove question ${i + 1}`}
+                      icon="close"
+                      label={`Remove skill ${i + 1}`}
                       onClick={() =>
                         criteria({
-                          questions: draft.criteria.questions.filter(
+                          skills: draft.criteria.skills.filter(
                             (_, n) => n !== i,
                           ),
                         })
                       }
                     />
                   </div>
-                  <TextField
-                    label="Question"
-                    required
-                    value={q.text}
-                    onChange={(e) =>
-                      criteria({
-                        questions: draft.criteria.questions.map((x, n) =>
-                          i === n ? { ...x, text: e.target.value } : x,
-                        ),
-                      })
-                    }
-                  />
-                  <div className="form-grid">
+                ))}
+                <Button
+                  variant="tonal"
+                  icon="add"
+                  disabled={draft.criteria.skills.length >= skills.length}
+                  onClick={() => setPicking({ kind: "skill" })}
+                >
+                  Add skill
+                </Button>
+              </fieldset>
+              <fieldset className="form-section">
+                <legend>Languages</legend>
+                {draft.criteria.languages.map((l, i) => (
+                  <div className="criteria-row" key={i}>
+                    <button
+                      type="button"
+                      className="catalogue-field"
+                      aria-label={`Language ${i + 1}: ${l.name}`}
+                      onClick={() => setPicking({ kind: "language", index: i })}
+                    >
+                      <LanguageFlag name={l.name} />
+                      <span>
+                        <small>Language {i + 1}</small>
+                        {l.name}
+                      </span>
+                      <Icon name="expand_more" />
+                    </button>
                     <SelectField
-                      label="Answer type"
-                      value={q.type}
+                      label="Minimum proficiency"
+                      value={l.proficiency}
                       onChange={(e) =>
                         criteria({
-                          questions: draft.criteria.questions.map((x, n) =>
-                            i === n ? { ...x, type: e.target.value } : x,
+                          languages: draft.criteria.languages.map((x, n) =>
+                            i === n ? { ...x, proficiency: e.target.value } : x,
                           ),
                         })
                       }
                     >
-                      <option>Yes / no</option>
-                      <option>Short answer</option>
+                      {[
+                        "Beginner",
+                        "Intermediate",
+                        "Advanced",
+                        "Fluent",
+                        "Native",
+                      ].map((x) => (
+                        <option key={x}>{x}</option>
+                      ))}
                     </SelectField>
-                    {q.type === "Yes / no" && (
-                      <SelectField
-                        label="Passing answer"
-                        value={q.answer}
-                        onChange={(e) =>
-                          criteria({
-                            questions: draft.criteria.questions.map((x, n) =>
-                              i === n ? { ...x, answer: e.target.value } : x,
-                            ),
-                          })
-                        }
-                      >
-                        <option>Any</option>
-                        <option>Yes</option>
-                        <option>No</option>
-                      </SelectField>
-                    )}
-                  </div>
-                  <label className="check-label">
-                    <input
-                      type="checkbox"
-                      checked={q.required}
-                      onChange={(e) =>
+                    <IconButton
+                      icon="close"
+                      label={`Remove language ${i + 1}`}
+                      onClick={() =>
                         criteria({
-                          questions: draft.criteria.questions.map((x, n) =>
-                            i === n ? { ...x, required: e.target.checked } : x,
+                          languages: draft.criteria.languages.filter(
+                            (_, n) => n !== i,
                           ),
                         })
                       }
                     />
-                    Required to apply
-                  </label>
-                </div>
-              ))}
-              <Button
-                variant="tonal"
-                icon="add"
-                onClick={() =>
-                  criteria({
-                    questions: [
-                      ...draft.criteria.questions,
-                      {
-                        text: "",
-                        type: "Yes / no",
-                        required: true,
-                        answer: "Any",
-                      },
-                    ],
-                  })
-                }
-              >
-                Add question
-              </Button>
-            </fieldset>
-          </div>
-        ) : (
-          <div className="form-stack">
-            <div>
-              <h2>{draft.title}</h2>
+                  </div>
+                ))}
+                <Button
+                  variant="tonal"
+                  icon="add"
+                  disabled={draft.criteria.languages.length >= languages.length}
+                  onClick={() => setPicking({ kind: "language" })}
+                >
+                  Add language
+                </Button>
+              </fieldset>
+              <fieldset className="form-section">
+                <legend>Application questions</legend>
+                {draft.criteria.questions.map((q, i) => (
+                  <div className="question-editor" key={i}>
+                    <div className="actions spread">
+                      <strong>Question {i + 1}</strong>
+                      <IconButton
+                        icon="delete"
+                        label={`Remove question ${i + 1}`}
+                        onClick={() =>
+                          criteria({
+                            questions: draft.criteria.questions.filter(
+                              (_, n) => n !== i,
+                            ),
+                          })
+                        }
+                      />
+                    </div>
+                    <TextField
+                      label="Question"
+                      required
+                      value={q.text}
+                      onChange={(e) =>
+                        criteria({
+                          questions: draft.criteria.questions.map((x, n) =>
+                            i === n ? { ...x, text: e.target.value } : x,
+                          ),
+                        })
+                      }
+                    />
+                    <div className="form-grid">
+                      <SelectField
+                        label="Answer type"
+                        value={q.type}
+                        onChange={(e) =>
+                          criteria({
+                            questions: draft.criteria.questions.map((x, n) =>
+                              i === n ? { ...x, type: e.target.value } : x,
+                            ),
+                          })
+                        }
+                      >
+                        <option>Yes / no</option>
+                        <option>Short answer</option>
+                      </SelectField>
+                      {q.type === "Yes / no" && (
+                        <SelectField
+                          label="Passing answer"
+                          value={q.answer}
+                          onChange={(e) =>
+                            criteria({
+                              questions: draft.criteria.questions.map((x, n) =>
+                                i === n ? { ...x, answer: e.target.value } : x,
+                              ),
+                            })
+                          }
+                        >
+                          <option>Any</option>
+                          <option>Yes</option>
+                          <option>No</option>
+                        </SelectField>
+                      )}
+                    </div>
+                    <Checkbox
+                      label="Required answer"
+                      showLabel
+                      checked={q.required}
+                      onChange={(e) =>
+                        criteria({
+                          questions: draft.criteria.questions.map((x, n) =>
+                            n === i ? { ...x, required: e.target.checked } : x,
+                          ),
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+                <Button
+                  variant="tonal"
+                  icon="add"
+                  onClick={() =>
+                    criteria({
+                      questions: [
+                        ...draft.criteria.questions,
+                        {
+                          text: "",
+                          type: "Yes / no",
+                          required: true,
+                          answer: "Any",
+                        },
+                      ],
+                    })
+                  }
+                >
+                  Add question
+                </Button>
+              </fieldset>
+            </div>
+          ) : (
+            <div className="form-stack">
+              <div>
+                <h2>{draft.title}</h2>
+                <p className="muted">
+                  {draft.location} · {draft.mode} · {draft.type}
+                </p>
+              </div>
+              <RichText value={draft.description} />
+              <div className="notice">
+                <Icon name="checklist" />
+                <span>
+                  {draft.criteria.years} years’ experience ·{" "}
+                  {draft.criteria.skills.length} skills ·{" "}
+                  {draft.criteria.languages.length} languages ·{" "}
+                  {draft.criteria.questions.length} questions
+                </span>
+              </div>
+              <p>
+                Closes {draft.closing ? dateLabel(draft.closing) : "Not set"}
+              </p>
               <p className="muted">
-                {draft.location} · {draft.mode} · {draft.type}
+                This creates a job in your preview workspace. It will not appear
+                on the public job board.
               </p>
             </div>
-            <RichText value={draft.description} />
-            <div className="notice">
-              <Icon name="checklist" />
-              <span>
-                {draft.criteria.years} years’ experience ·{" "}
-                {draft.criteria.skills.length} skills ·{" "}
-                {draft.criteria.languages.length} languages ·{" "}
-                {draft.criteria.questions.length} questions
-              </span>
-            </div>
-            <p>Closes {draft.closing ? dateLabel(draft.closing) : "Not set"}</p>
-            <p className="muted">
-              This creates a job in your preview workspace. It will not appear
-              on the public job board.
-            </p>
-          </div>
-        )}
-      </Panel>
+          )}
+        </Panel>
+      </AnimatedRegion>
+      {picking && (
+        <SearchDialog
+          title={
+            picking.kind === "skill" ? "Choose a skill" : "Choose a language"
+          }
+          placeholder={
+            picking.kind === "skill"
+              ? "Search predefined skills"
+              : "Search languages"
+          }
+          onClose={() => setPicking(null)}
+          options={
+            picking.kind === "skill"
+              ? skillCatalogue.map((skill) => ({
+                  id: skill.name,
+                  label: skill.name,
+                  keywords: skill.keywords,
+                  leading: <SkillIcon name={skill.name} />,
+                  taken: draft.criteria.skills.some(
+                    (s, i) => s.name === skill.name && i !== picking.index,
+                  ),
+                }))
+              : languages.map((language) => ({
+                  id: language.name,
+                  label: language.name,
+                  keywords: `${language.code} ${language.endonym}`,
+                  leading: <LanguageFlag name={language.name} />,
+                  trailing: language.endonym,
+                  taken: draft.criteria.languages.some(
+                    (l, i) => l.name === language.name && i !== picking.index,
+                  ),
+                }))
+          }
+          onPick={(name) => {
+            if (picking.kind === "skill")
+              criteria({
+                skills:
+                  picking.index === undefined
+                    ? [
+                        ...draft.criteria.skills,
+                        { name, importance: "Required" },
+                      ]
+                    : draft.criteria.skills.map((s, i) =>
+                        i === picking.index ? { ...s, name } : s,
+                      ),
+              });
+            else
+              criteria({
+                languages:
+                  picking.index === undefined
+                    ? [
+                        ...draft.criteria.languages,
+                        { name, proficiency: "Fluent" },
+                      ]
+                    : draft.criteria.languages.map((l, i) =>
+                        i === picking.index ? { ...l, name } : l,
+                      ),
+              });
+          }}
+        />
+      )}
       <div className="wizard-actions">
         <Button onClick={() => navigate(edit ? `/jobs/${edit}` : "/jobs")}>
           Cancel

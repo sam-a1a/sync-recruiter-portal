@@ -1,3 +1,5 @@
+import { skillCatalogue } from "./catalogues/people.ts";
+import type { BrandLogo } from "./catalogues/brands";
 export type Stage =
   | "New"
   | "Reviewing"
@@ -105,6 +107,7 @@ export type Workspace = {
   team: Member[];
   tags: string[];
   channels: string[];
+  channelLogos?: Record<string, BrandLogo>;
   organization: { name: string; website: string; description: string };
   account: { name: string; email: string };
 };
@@ -124,18 +127,7 @@ export const roles = [
   "Logistics",
   "Community outreach",
 ];
-export const skills = [
-  "Project management",
-  "MEAL",
-  "Data analysis",
-  "Excel",
-  "Budgeting",
-  "Safeguarding",
-  "Community engagement",
-  "Procurement",
-  "Report writing",
-  "Communications",
-];
+export const skills = skillCatalogue.map((skill) => skill.name);
 export const emptyCriteria: Criteria = {
   years: 0,
   skills: [],

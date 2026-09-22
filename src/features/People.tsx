@@ -1,3 +1,5 @@
+import { SkillIcon, LanguageTag } from "../components/CatalogueIcon";
+import { AnimatedRegion } from "../components/AnimatedRegion";
 import { ViewToggle } from "../components/ViewToggle";
 import { useCollectionView } from "../hooks/useCollectionView";
 import { useState } from "react";
@@ -318,7 +320,11 @@ export function Candidates({ saved = false }: { saved?: boolean }) {
         data-view={view}
       >
         {results.map((c) => (
-          <article className="candidate-card" key={c.id}>
+          <article
+            className="candidate-card"
+            key={c.id}
+            style={{ viewTransitionName: `candidate-${c.id}` }}
+          >
             <div className="candidate-card-heading">
               <Avatar name={c.name} large />
               <button
@@ -412,58 +418,90 @@ export function Candidates({ saved = false }: { saved?: boolean }) {
 export function ProfileContent({
   candidate: c,
   snapshot = false,
+  section = "all",
 }: {
   candidate: Candidate;
   snapshot?: boolean;
+  section?: string;
 }) {
   return (
-    <Panel title={snapshot ? "Profile at application" : "Profile"}>
-      <p className="panel-note">
-        {snapshot
-          ? "A snapshot of the profile when this application was submitted."
-          : "The candidate’s current profile."}
-      </p>
-      <h3>About</h3>
-      <p className="prose mt">{c.about}</p>
-      <div className="profile-section">
-        <h3>Experience</h3>
-        <div className="experience-entry">
-          <span className="section-icon">
-            <Icon name="work" />
-          </span>
-          <div>
-            <strong>{c.role} professional</strong>
-            <p className="muted">Community programmes · {c.location}</p>
-            <span className="meta">
-              {c.years} years of relevant experience · Sample profile
+    <Panel
+      title={
+        section === "all"
+          ? snapshot
+            ? "Profile at application"
+            : "Profile"
+          : undefined
+      }
+    >
+      {section === "all" && (
+        <p className="panel-note">
+          {snapshot
+            ? "A snapshot of the profile when this application was submitted."
+            : "The candidate’s current profile."}
+        </p>
+      )}
+      {(section === "all" || section === "overview") && (
+        <>
+          <h3>About</h3>
+          <p className="prose mt">{c.about}</p>
+        </>
+      )}
+      {(section === "all" || section === "experience") && (
+        <div className="profile-section">
+          <h3>Experience</h3>
+          <div className="experience-entry">
+            <span className="section-icon">
+              <Icon name="work" />
             </span>
+            <div>
+              <strong>{c.role} professional</strong>
+              <p className="muted">Community programmes · {c.location}</p>
+              <span className="meta">
+                {c.years} years of relevant experience · Sample profile
+              </span>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="profile-section">
-        <h3>Skills</h3>
-        <div className="chips mt">
-          {c.skills.map((s) => (
-            <span className="skill-chip" key={s}>
-              {s}
-            </span>
+      )}
+      {(section === "all" || section === "skills") && (
+        <div className="profile-section">
+          <h3>Skills</h3>
+          <div className="chips mt">
+            {c.skills.map((s) => (
+              <span className="skill-chip" key={s}>
+                <SkillIcon name={s} />
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {(section === "all" || section === "languages") && (
+        <div className="profile-section">
+          <h3>Languages</h3>
+          {c.languages.map((l, i) => (
+            <div className="simple-row language-row" key={l}>
+              <LanguageTag name={l} />
+              <Badge>{i === 0 ? "Native" : "Advanced"}</Badge>
+            </div>
           ))}
         </div>
-      </div>
-      <div className="profile-section">
-        <h3>Languages</h3>
-        {c.languages.map((l, i) => (
-          <div className="simple-row" key={l}>
-            <span>{l}</span>
-            <Badge>{i === 0 ? "Native" : "Advanced"}</Badge>
+      )}
+      {(section === "all" || section === "education") && (
+        <div className="profile-section">
+          <h3>Education</h3>
+          <div className="experience-entry">
+            <span className="section-icon">
+              <Icon name="school" />
+            </span>
+            <div>
+              <strong>Bachelor’s degree</strong>
+              <p className="muted">Sample education record</p>
+            </div>
           </div>
-        ))}
-      </div>
-      <div className="profile-section">
-        <h3>Education</h3>
-        <p className="mt">Bachelor’s degree</p>
-        <p className="muted">Sample education record</p>
-      </div>
+        </div>
+      )}
     </Panel>
   );
 }
@@ -476,6 +514,7 @@ export function ProfileCV({
   open: boolean;
   onClose: () => void;
 }) {
+  const [section, setSection] = useState("overview");
   return (
     <Dialog
       open={open}
@@ -505,7 +544,34 @@ export function ProfileCV({
         </>
       }
     >
-      <ProfileContent candidate={c} />
+      <div className="cv-sections">
+        <div className="detail-navigation">
+          <Tabs
+            label="CV sections"
+            value={section}
+            onChange={setSection}
+            idPrefix="cv-tabs"
+            panelId="cv-panel"
+            options={[
+              { id: "overview", label: "Overview" },
+              { id: "experience", label: "Experience" },
+              { id: "skills", label: "Skills" },
+              { id: "languages", label: "Languages" },
+              { id: "education", label: "Education" },
+            ]}
+          />
+        </div>
+        <div
+          role="tabpanel"
+          id="cv-panel"
+          aria-labelledby={`cv-tabs-${section}`}
+          tabIndex={0}
+        >
+          <AnimatedRegion changeKey={section}>
+            <ProfileContent candidate={c} section={section} />
+          </AnimatedRegion>
+        </div>
+      </div>
     </Dialog>
   );
 }
@@ -624,65 +690,72 @@ export function CandidateDetail({ id }: { id: string }) {
         aria-labelledby={`candidate-tabs-${tab}`}
         tabIndex={0}
       >
-        <div hidden={tab !== "profile"}>
-          <ProfileContent candidate={c} />
-        </div>
-        <div hidden={tab !== "notes"}>
-          <div className="detail-grid">
-            <Notes notes={c.notes} onChange={(notes) => update({ notes })} />
-            <div className="stack">
-              <TagsEditor tags={c.tags} onChange={(tags) => update({ tags })} />
-              <Panel title="Talent pool">
-                <div className="pool-state">
-                  <Icon name={c.saved ? "bookmark" : "person"} size={32} />
-                  <h3>
-                    {c.saved
-                      ? "A person to keep in mind"
-                      : "Keep this connection"}
-                  </h3>
-                  <p className="muted">
-                    {c.saved
-                      ? "Saved for opportunities with your team."
-                      : "Save this profile so it is easy to find when the right opportunity comes along."}
-                  </p>
-                  <Button
-                    variant="tonal"
-                    onClick={() =>
-                      update({
-                        saved: !c.saved,
-                        savedAt: c.saved ? undefined : new Date().toISOString(),
-                      })
-                    }
-                  >
-                    {c.saved ? "Remove from pool" : "Save candidate"}
-                  </Button>
-                </div>
-              </Panel>
+        <AnimatedRegion changeKey={tab}>
+          <div hidden={tab !== "profile"}>
+            <ProfileContent candidate={c} />
+          </div>
+          <div hidden={tab !== "notes"}>
+            <div className="detail-grid">
+              <Notes notes={c.notes} onChange={(notes) => update({ notes })} />
+              <div className="stack">
+                <TagsEditor
+                  tags={c.tags}
+                  onChange={(tags) => update({ tags })}
+                />
+                <Panel title="Talent pool">
+                  <div className="pool-state">
+                    <Icon name={c.saved ? "bookmark" : "person"} size={32} />
+                    <h3>
+                      {c.saved
+                        ? "A person to keep in mind"
+                        : "Keep this connection"}
+                    </h3>
+                    <p className="muted">
+                      {c.saved
+                        ? "Saved for opportunities with your team."
+                        : "Save this profile so it is easy to find when the right opportunity comes along."}
+                    </p>
+                    <Button
+                      variant="tonal"
+                      onClick={() =>
+                        update({
+                          saved: !c.saved,
+                          savedAt: c.saved
+                            ? undefined
+                            : new Date().toISOString(),
+                        })
+                      }
+                    >
+                      {c.saved ? "Remove from pool" : "Save candidate"}
+                    </Button>
+                  </div>
+                </Panel>
+              </div>
             </div>
           </div>
-        </div>
-        <div hidden={tab !== "placements"}>
-          <Panel title="Placements">
-            {placements.length ? (
-              placements.map((a) => (
-                <Link
-                  key={a.id}
-                  className="placement-summary"
-                  to={`/applications/${a.id}`}
-                >
-                  <strong>
-                    {data.jobs.find((j) => j.id === a.jobId)?.title}
-                  </strong>
-                  <Status value={a.confirmation || "Awaiting confirmation"} />
-                </Link>
-              ))
-            ) : (
-              <p className="muted">
-                No placements recorded with your workspace.
-              </p>
-            )}
-          </Panel>
-        </div>
+          <div hidden={tab !== "placements"}>
+            <Panel title="Placements">
+              {placements.length ? (
+                placements.map((a) => (
+                  <Link
+                    key={a.id}
+                    className="placement-summary"
+                    to={`/applications/${a.id}`}
+                  >
+                    <strong>
+                      {data.jobs.find((j) => j.id === a.jobId)?.title}
+                    </strong>
+                    <Status value={a.confirmation || "Awaiting confirmation"} />
+                  </Link>
+                ))
+              ) : (
+                <p className="muted">
+                  No placements recorded with your workspace.
+                </p>
+              )}
+            </Panel>
+          </div>
+        </AnimatedRegion>
       </div>
       <ProfileCV candidate={c} open={cv} onClose={() => setCV(false)} />
     </>
@@ -775,7 +848,10 @@ export function Placements() {
               {list.map((a) => {
                 const c = data.candidates.find((c) => c.id === a.candidateId)!;
                 return (
-                  <tr key={a.id}>
+                  <tr
+                    key={a.id}
+                    style={{ viewTransitionName: `placement-${a.id}` }}
+                  >
                     <td className="person-cell">
                       <Link
                         className="person-link"

@@ -1,3 +1,4 @@
+import { animateLayout } from "../app/animateLayout";
 import { useState } from "react";
 export type CollectionView = "cards" | "rows";
 
@@ -19,7 +20,8 @@ export function useCollectionView(
   return [
     view,
     (next: CollectionView) => {
-      setView(next);
+      if (next === view) return;
+      animateLayout(() => setView(next));
       try {
         localStorage.setItem(key, next);
       } catch {

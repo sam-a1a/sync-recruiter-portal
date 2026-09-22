@@ -30,9 +30,14 @@ test("recruiter workflows persist changes and enforce lifecycle rules", async ({
   await p.getByRole("button", { name: "Continue", exact: true }).click();
   await p.getByRole("button", { name: "Add skill", exact: true }).click();
   await p
-    .getByLabel("Skill 1", { exact: true })
-    .selectOption("Community engagement");
+    .getByRole("dialog")
+    .getByRole("button", { name: "Community engagement", exact: true })
+    .click();
   await p.getByRole("button", { name: "Add language", exact: true }).click();
+  await p
+    .getByRole("dialog")
+    .getByRole("button", { name: "Arabic العربية", exact: true })
+    .click();
   await p.getByRole("button", { name: "Add question", exact: true }).click();
   await p
     .getByLabel("Question", { exact: true })

@@ -1,4 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { BrandIcon } from "../components/CatalogueIcon";
+import { findBrand, defaultBrand, type BrandLogo } from "../catalogues/brands";
+import { AnimatedRegion } from "../components/AnimatedRegion";
+import { useState, useEffect, type FormEvent } from "react";
 import {
   Header,
   Panel,
@@ -32,6 +35,7 @@ export function Settings() {
     kind: "tags" | "channels";
     old: string;
     name: string;
+    website?: string;
   } | null>(null);
   const [deleteVocab, setDeleteVocab] = useState<{
     kind: "tags" | "channels";
@@ -66,7 +70,8 @@ export function Settings() {
         : "Invitation added to the preview. No email sent.",
     );
   };
-  const saveVocab = (e: FormEvent) => {
+  const [savingVocab, setSavingVocab] = useState(false);
+  const saveVocab = async (e: FormEvent) => {
     e.preventDefault();
     if (!vocab) return;
     const name = vocab.name.trim();
@@ -80,8 +85,23 @@ export function Settings() {
       setError("Choose a unique name. “Direct” is reserved.");
       return;
     }
+    setSavingVocab(true);
+    let logo: BrandLogo | undefined;
+    if (vocab.kind === "channels") {
+      try {
+        logo = await findBrand(name, vocab.website);
+      } catch {
+        logo = defaultBrand(name);
+      }
+    }
+    const channelLogos = { ...data.channelLogos };
+    if (vocab.kind === "channels") {
+      delete channelLogos[vocab.old];
+      if (logo) channelLogos[name] = logo;
+    }
     setData((d) => ({
       ...d,
+      channelLogos,
       [vocab.kind]: vocab.old
         ? d[vocab.kind].map((s) => (s === vocab.old ? name : s))
         : [...d[vocab.kind], name],
@@ -107,6 +127,7 @@ export function Settings() {
           : d.applications,
     }));
     setVocab(null);
+    setSavingVocab(false);
     notify("Workspace vocabulary saved");
   };
   return (
@@ -127,7 +148,7 @@ export function Settings() {
           { id: "tenant", label: "Organization" },
         ]}
       />
-      <div className="section-space">
+      <AnimatedRegion changeKey={tab} className="section-space">
         {tab === "team" ? (
           <Panel
             title="The people behind the work"
@@ -153,7 +174,10 @@ export function Settings() {
             <p className="panel-note">
               Admins manage the workspace. Recruiters manage hiring.
             </p>
-            <div className="team-list">
+            <div
+              className="team-list"
+              data-has-reminders={data.team.some((m) => m.status === "Invited")}
+            >
               {data.team.map((m) => (
                 <div className="team-row" key={m.id}>
                   <Avatar name={m.name} />
@@ -178,6 +202,12 @@ export function Settings() {
                         }
                       />
                     )}
+                    {m.status !== "Invited" &&
+                      data.team.some(
+                        (person) => person.status === "Invited",
+                      ) && (
+                        <span className="reminder-space" aria-hidden="true" />
+                      )}
                     <IconButton
                       icon="edit"
                       label={`Edit ${m.name}`}
@@ -236,7 +266,14 @@ export function Settings() {
                   <div className="simple-row" key={name}>
                     <div className="actions">
                       <span className="section-icon">
-                        <Icon name={tab === "tags" ? "bookmark" : "link"} />
+                        {tab === "channels" ? (
+                          <BrandIcon
+                            name={name}
+                            logo={data.channelLogos?.[name]}
+                          />
+                        ) : (
+                          <Icon name="bookmark" />
+                        )}
                       </span>
                       <div>
                         <strong>{name}</strong>
@@ -251,7 +288,12 @@ export function Settings() {
                         label={`Rename ${name}`}
                         onClick={() => {
                           setError("");
-                          setVocab({ kind: tab, old: name, name });
+                          setVocab({
+                            kind: tab,
+                            old: name,
+                            name,
+                            website: data.channelLogos?.[name]?.website,
+                          });
                         }}
                       />
                       <IconButton
@@ -362,7 +404,7 @@ export function Settings() {
             </div>
           </div>
         )}
-      </div>
+      </AnimatedRegion>
       <Dialog
         open={!!draft}
         onClose={() => setDraft(null)}
@@ -445,8 +487,13 @@ export function Settings() {
         actions={
           <>
             <Button onClick={() => setVocab(null)}>Cancel</Button>
-            <Button variant="filled" form="vocab-form" type="submit">
-              Save
+            <Button
+              variant="filled"
+              form="vocab-form"
+              type="submit"
+              disabled={savingVocab}
+            >
+              {savingVocab ? "Saving…" : "Save"}
             </Button>
           </>
         }
@@ -460,6 +507,22 @@ export function Settings() {
               value={vocab.name}
               onChange={(e) => setVocab({ ...vocab, name: e.target.value })}
             />
+            {vocab.kind === "channels" && (
+              <>
+                <TextField
+                  label="Channel website (optional)"
+                  placeholder="linkedin.com"
+                  value={vocab.website || ""}
+                  onChange={(e) =>
+                    setVocab({ ...vocab, website: e.target.value })
+                  }
+                />
+                <ChannelLogoPreview
+                  name={vocab.name}
+                  website={vocab.website || ""}
+                />
+              </>
+            )}
             {error && (
               <p className="inline-error" role="alert">
                 {error}
@@ -482,6 +545,14 @@ export function Settings() {
             [deleteVocab.kind]: d[deleteVocab.kind].filter(
               (x) => x !== deleteVocab.name,
             ),
+            channelLogos:
+              deleteVocab.kind === "channels"
+                ? Object.fromEntries(
+                    Object.entries(d.channelLogos || {}).filter(
+                      ([name]) => name !== deleteVocab.name,
+                    ),
+                  )
+                : d.channelLogos,
             candidates:
               deleteVocab.kind === "tags"
                 ? d.candidates.map((c) => ({
@@ -667,5 +738,58 @@ export function Account() {
         </div>
       </div>
     </>
+  );
+}
+
+function ChannelLogoPreview({
+  name,
+  website,
+}: {
+  name: string;
+  website: string;
+}) {
+  const [result, setResult] = useState<{
+    key: string;
+    logo?: BrandLogo;
+    failed?: boolean;
+  }>();
+  const key = `${name}|${website}`;
+  useEffect(() => {
+    let current = true;
+    const timer = setTimeout(() => {
+      findBrand(name, website)
+        .then((logo) => {
+          if (current) setResult({ key, logo });
+        })
+        .catch(() => {
+          if (current) setResult({ key, failed: true });
+        });
+    }, 300);
+    return () => {
+      current = false;
+      clearTimeout(timer);
+    };
+  }, [name, website, key]);
+  const logo = result?.key === key ? result.logo : undefined;
+  return (
+    <div className="channel-logo-preview">
+      <span className="section-icon">
+        <BrandIcon name={name} logo={logo} />
+      </span>
+      <div>
+        <strong>{logo?.title || "Channel logo"}</strong>
+        <p className="meta" role="status">
+          {!name && !website
+            ? "Enter a name or website to find its logo."
+            : result?.key !== key
+              ? "Finding logo…"
+              : logo
+                ? "Logo from thesvg.org"
+                : result.failed
+                  ? "Logo catalogue unavailable. You can still save this channel."
+                  : "No matching logo. A link icon will be used."}
+        </p>
+      </div>
+    </div>
   );
 }

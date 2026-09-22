@@ -1,0 +1,76 @@
+[
+  {
+    "slug": "facebook",
+    "title": "Facebook",
+    "aliases": [],
+    "website": "https://www.facebook.com",
+    "path": "/icons/facebook/default.svg",
+    "license": "CC0-1.0"
+  },
+  {
+    "slug": "google-sheets",
+    "title": "Google Sheets",
+    "aliases": [],
+    "website": "https://sheets.google.com/",
+    "path": "/icons/google-sheets/default.svg",
+    "license": "CC0-1.0"
+  },
+  {
+    "slug": "instagram",
+    "title": "Instagram",
+    "aliases": [],
+    "website": "https://www.instagram.com/",
+    "path": "/icons/instagram/default.svg",
+    "license": "CC0-1.0"
+  },
+  {
+    "slug": "linkedin",
+    "title": "LinkedIn",
+    "aliases": [],
+    "website": "https://www.linkedin.com/",
+    "path": "/icons/linkedin/default.svg",
+    "license": "MIT"
+  },
+  {
+    "slug": "microsoft-excel",
+    "title": "Microsoft Excel",
+    "aliases": [],
+    "website": "https://www.microsoft.com/microsoft-365/excel",
+    "path": "/icons/microsoft-excel/default.svg",
+    "license": "MIT"
+  },
+  {
+    "slug": "telegram",
+    "title": "Telegram",
+    "aliases": [],
+    "website": "https://web.telegram.org/",
+    "path": "/icons/telegram/default.svg",
+    "license": "CC0-1.0"
+  },
+  {
+    "slug": "whatsapp",
+    "title": "WhatsApp",
+    "aliases": [],
+    "website": "https://web.whatsapp.com",
+    "path": "/icons/whatsapp/default.svg",
+    "license": "CC0-1.0"
+  },
+  {
+    "slug": "x",
+    "title": "X",
+    "aliases": [
+      "Twitter"
+    ],
+    "website": "https://x.com",
+    "path": "/icons/x/default.svg",
+    "license": "CC0-1.0"
+  },
+  {
+    "slug": "youtube",
+    "title": "YouTube",
+    "aliases": [],
+    "website": "https://www.youtube.com",
+    "path": "/icons/youtube/default.svg",
+    "license": "CC0-1.0"
+  }
+]

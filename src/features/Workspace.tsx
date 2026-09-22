@@ -1,14 +1,10 @@
+import { BrandIcon } from "../components/CatalogueIcon";
+import { Checkbox } from "../components/Checkbox";
+import { AnimatedRegion } from "../components/AnimatedRegion";
 import { ViewToggle } from "../components/ViewToggle";
 import { useCollectionView } from "../hooks/useCollectionView";
 import { useState, type FormEvent } from "react";
-import {
-  Header,
-  Panel,
-  Search,
-  Empty,
-  Badge,
-  Link,
-} from "../components/PortalUI";
+import { Header, Panel, Search, Empty, Link } from "../components/PortalUI";
 import { Button, IconButton } from "../components/Button";
 import { Icon } from "../components/Icon";
 import { TextField, TextArea, SelectField } from "../components/Field";
@@ -106,80 +102,80 @@ export function Templates() {
           </div>
           {!visible.length && <Empty title="No matching templates" />}
         </div>
-        {template ? (
-          <Panel className="template-preview">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">Message preview</p>
-                <h2>{template.name}</h2>
+        <AnimatedRegion changeKey={`${template?.id}-${preview}`}>
+          {template ? (
+            <Panel className="template-preview">
+              <div className="panel-heading">
+                <div>
+                  <p className="eyebrow">Message preview</p>
+                  <h2>{template.name}</h2>
+                </div>
+                <div className="actions">
+                  <IconButton
+                    icon="edit"
+                    outlined
+                    label="Edit template"
+                    onClick={() => {
+                      setError("");
+                      setDraft({ ...template });
+                    }}
+                  />
+                  <IconButton
+                    icon="delete"
+                    outlined
+                    label="Delete template"
+                    onClick={() => setRemove(template)}
+                  />
+                </div>
               </div>
-              <div className="actions">
-                <IconButton
-                  icon="edit"
-                  outlined
-                  label="Edit template"
-                  onClick={() => {
-                    setError("");
-                    setDraft({ ...template });
-                  }}
-                />
-                <IconButton
-                  icon="delete"
-                  outlined
-                  label="Delete template"
-                  onClick={() => setRemove(template)}
-                />
-              </div>
-            </div>
-            <label className="check-label">
-              <input
-                type="checkbox"
+              <Checkbox
+                label="Show sample values"
+                showLabel
                 checked={preview}
                 onChange={(e) => setPreview(e.target.checked)}
               />
-              Show sample values
-            </label>
-            <div className="message-paper">
-              <div className="message-meta">
-                <span>To</span>
-                <strong>
-                  {preview ? "Maya Khalil" : "{{ candidate_name }}"}
-                </strong>
+              <div className="message-paper">
+                <div className="message-meta">
+                  <span>To</span>
+                  <strong>
+                    {preview ? "Maya Khalil" : "{{ candidate_name }}"}
+                  </strong>
+                </div>
+                <div className="message-meta">
+                  <span>Subject</span>
+                  <strong>{sample(template.subject)}</strong>
+                </div>
+                <p className="preserve">{sample(template.body)}</p>
               </div>
-              <div className="message-meta">
-                <span>Subject</span>
-                <strong>{sample(template.subject)}</strong>
+              <div className="notice">
+                <Icon name="info" />
+                <span>
+                  Names and job details are filled in when you use a template on
+                  an application.
+                </span>
               </div>
-              <p className="preserve">{sample(template.body)}</p>
-            </div>
-            <div className="notice">
-              <Icon name="info" />
-              <span>
-                Names and job details are filled in when you use a template on
-                an application.
-              </span>
-            </div>
-            <Button
-              variant="outlined"
-              icon="add"
-              onClick={() => {
-                setError("");
-                setDraft({
-                  ...template,
-                  id: "",
-                  name: `${template.name} · copy`,
-                });
-              }}
-            >
-              Duplicate template
-            </Button>
-          </Panel>
-        ) : (
-          <Empty
-            title="Start with a few good words"
-            description="Create your first template for the messages your team sends often."
-          />
-        )}
+              <Button
+                variant="outlined"
+                icon="add"
+                onClick={() => {
+                  setError("");
+                  setDraft({
+                    ...template,
+                    id: "",
+                    name: `${template.name} · copy`,
+                  });
+                }}
+              >
+                Duplicate template
+              </Button>
+            </Panel>
+          ) : (
+            <Empty
+              title="Start with a few good words"
+              description="Create your first template for the messages your team sends often."
+            />
+          )}
+        </AnimatedRegion>
       </div>
       <Dialog
         open={!!draft}
@@ -389,7 +385,10 @@ export function TrackedLinks({
             </thead>
             <tbody>
               {links.map((l) => (
-                <tr key={l.id}>
+                <tr
+                  key={l.id}
+                  style={{ viewTransitionName: `tracked-${l.id}` }}
+                >
                   <td className="link-name">
                     <a
                       className="text-link"
@@ -405,7 +404,13 @@ export function TrackedLinks({
                     </span>
                   </td>
                   <td data-label="Channel">
-                    <Badge>{l.channel}</Badge>
+                    <span className="channel-badge" title={l.channel}>
+                      <BrandIcon
+                        name={l.channel}
+                        logo={data.channelLogos?.[l.channel]}
+                      />
+                      <span>{l.channel}</span>
+                    </span>
                   </td>
                   <td data-label="Views">{l.views}</td>
                   <td data-label="Applications">{l.applications}</td>

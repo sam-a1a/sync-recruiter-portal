@@ -18,6 +18,8 @@ The repository is private. Its GitHub Pages preview is publicly accessible and c
 
 Record collections offer persistent **Cards / Rows** controls. Application and candidate records use URL-linked section tabs. Job descriptions support rich-text formatting, preserved as Markdown through draft, review, publishing and editing.
 
+Collections and section changes animate with reduced-motion support. CVs use section tabs; job screening uses searchable skill and language pickers with icons and HatScripts flags. Channel names or websites resolve logos from thesvg.org. [Asset sources and licenses](docs/assets.md).
+
 Use **Settings → Organization → Reset preview** to restore the fictional workspace. Account settings expose light/dark/system appearance and contrast preferences. Motion follows the system's reduced-motion setting.
 
 ## Development
