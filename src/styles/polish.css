@@ -12,9 +12,11 @@
     background: var(--md-sys-color-surface-container);
     border-radius: 24px;
   }
-  .detail-navigation .tabs,
-  .application-workspace > .tabs {
+  .detail-navigation .tabs {
     justify-content: safe center;
+  }
+  .application-workspace > .tabs {
+    justify-content: flex-start;
   }
   .expressive-checkbox--labelled {
     width: auto;
